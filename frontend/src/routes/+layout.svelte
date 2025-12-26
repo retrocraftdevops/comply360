@@ -47,45 +47,37 @@
 		}
 	});
 
-	// Update current path on navigation and loading state
-	// Only redirect if we're not already on auth page and haven't just redirected
+	// Update current path and loading state
 	$: {
-		const newPath = $page.url.pathname;
-		const auth = get(authStore);
-		const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-		
-		currentPath = newPath;
-		showLoading = (isLoadingUser || $authStore.isLoading) && !newPath.startsWith('/auth');
-		
-		// Only redirect if:
-		// 1. We're not on an auth page
-		// 2. We're not on the root page
-		// 3. User is not authenticated
-		// 4. No token exists
-		// 5. We haven't already redirected to this path
-		// 6. Auth check is complete
-		if (
-			typeof window !== 'undefined' &&
-			hasCheckedAuth &&
-			!isLoadingUser &&
-			!$authStore.isLoading &&
-			!newPath.startsWith('/auth') &&
-			newPath !== '/' &&
-			!auth.isAuthenticated &&
-			!token &&
-			lastRedirectPath !== newPath
-		) {
-			lastRedirectPath = newPath;
-			// Use setTimeout to break the reactive cycle
-			setTimeout(() => {
+		currentPath = $page.url.pathname;
+		showLoading = (isLoadingUser || $authStore.isLoading) && !currentPath.startsWith('/auth');
+	}
+
+	// Separate reactive statement for redirect - only runs when path changes
+	$: if (
+		typeof window !== 'undefined' &&
+		hasCheckedAuth &&
+		!isLoadingUser &&
+		!$authStore.isLoading &&
+		currentPath &&
+		!currentPath.startsWith('/auth') &&
+		currentPath !== '/' &&
+		!get(authStore).isAuthenticated &&
+		!localStorage.getItem('access_token') &&
+		lastRedirectPath !== currentPath
+	) {
+		lastRedirectPath = currentPath;
+		// Use requestAnimationFrame to break reactive cycle and prevent loops
+		requestAnimationFrame(() => {
+			if (lastRedirectPath === currentPath) {
 				goto('/auth/login', { replaceState: true });
-			}, 0);
-		}
-		
-		// Reset redirect path if we're on auth page
-		if (newPath.startsWith('/auth')) {
-			lastRedirectPath = '';
-		}
+			}
+		});
+	}
+
+	// Reset redirect path when on auth page
+	$: if (currentPath.startsWith('/auth')) {
+		lastRedirectPath = '';
 	}
 </script>
 
