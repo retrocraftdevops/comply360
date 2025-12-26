@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/comply360/auth-service/internal/repository"
@@ -90,16 +91,22 @@ func (s *AuthService) Login(tenantID uuid.UUID, req *models.LoginRequest) (*mode
 	// Get user by email
 	user, err := s.userRepo.GetByEmail(tenantID, req.Email)
 	if err != nil {
+		log.Printf("[AuthService] Login failed - user not found: email=%s, tenant=%s, error=%v", req.Email, tenantID, err)
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
+	log.Printf("[AuthService] User found: email=%s, tenant=%s, status=%s, hash_length=%d", req.Email, tenantID, user.Status, len(user.PasswordHash))
+
 	// Check if account is locked
 	if user.LockedUntil != nil && user.LockedUntil.After(time.Now()) {
+		log.Printf("[AuthService] Account locked: email=%s, locked_until=%v", req.Email, user.LockedUntil)
 		return nil, fmt.Errorf("account is locked until %v", user.LockedUntil)
 	}
 
 	// Verify password
+	log.Printf("[AuthService] Comparing password: hash_prefix=%s, password_length=%d", user.PasswordHash[:20], len(req.Password))
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		log.Printf("[AuthService] Password mismatch: email=%s, error=%v", req.Email, err)
 		// Increment failed login attempts
 		s.userRepo.IncrementFailedLoginAttempts(tenantID, req.Email)
 
@@ -112,6 +119,8 @@ func (s *AuthService) Login(tenantID uuid.UUID, req *models.LoginRequest) (*mode
 
 		return nil, fmt.Errorf("invalid credentials")
 	}
+
+	log.Printf("[AuthService] Password verified successfully: email=%s", req.Email)
 
 	// Check if MFA is enabled
 	if user.MFAEnabled {
