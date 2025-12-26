@@ -11,6 +11,7 @@
 	let hasCheckedAuth = false;
 	let redirecting = false;
 	let currentPath = '';
+	let showLoading = false;
 
 	// Use beforeNavigate to check auth before navigation
 	beforeNavigate(({ to, cancel }) => {
@@ -67,11 +68,14 @@
 		}
 	});
 
-	// Update current path on navigation
-	$: currentPath = $page.url.pathname;
+	// Update current path on navigation and loading state
+	$: {
+		currentPath = $page.url.pathname;
+		showLoading = (isLoadingUser || $authStore.isLoading) && !currentPath.startsWith('/auth');
+	}
 </script>
 
-{#if (isLoadingUser || get(authStore).isLoading) && !currentPath.startsWith('/auth')}
+{#if showLoading}
 	<div class="flex h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50/20">
 		<div class="text-center space-y-4">
 			<div class="flex justify-center">
