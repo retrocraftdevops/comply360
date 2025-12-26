@@ -37,7 +37,7 @@ func (r *CommissionRepository) Create(schema string, commission *models.Commissi
 	fmt.Printf("DEBUG REPO: Params: tenantID=%s, regID=%s, agentID=%s\n",
 		commission.TenantID, commission.RegistrationID, commission.AgentID)
 
-	return r.db.QueryRow(
+	err = r.db.QueryRow(
 		query,
 		commission.TenantID,
 		commission.RegistrationID,
@@ -49,6 +49,14 @@ func (r *CommissionRepository) Create(schema string, commission *models.Commissi
 		commission.Status,
 		metadataJSON,
 	).Scan(&commission.ID, &commission.CreatedAt, &commission.UpdatedAt)
+
+	if err != nil {
+		fmt.Printf("DEBUG REPO ERROR: %v\n", err)
+		return fmt.Errorf("database insert failed: %w", err)
+	}
+
+	fmt.Printf("DEBUG REPO SUCCESS: Created commission ID=%s\n", commission.ID)
+	return nil
 }
 
 // GetByID retrieves a commission by ID
