@@ -178,6 +178,7 @@ All scripts and documentation should reference:
 - [ ] Account is not locked (`locked_until` is NULL)
 - [ ] Failed login attempts = 0
 - [ ] User exists in both `global_users` and tenant schema
+- [ ] User has `tenant_admin` role assigned in `user_roles` table
 
 ---
 
