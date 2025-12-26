@@ -13,12 +13,16 @@ const (
 	ErrUnauthorized     = "UNAUTHORIZED"
 	ErrForbidden        = "FORBIDDEN"
 	ErrConflict         = "CONFLICT"
+	ErrAlreadyExists    = "ALREADY_EXISTS"
+	ErrInvalidCredentials = "INVALID_CREDENTIALS"
 	ErrTenantNotFound   = "TENANT_NOT_FOUND"
 	ErrTenantSuspended  = "TENANT_SUSPENDED"
 	ErrInvalidToken     = "INVALID_TOKEN"
 	ErrTokenExpired     = "TOKEN_EXPIRED"
 	ErrInsufficientPermissions = "INSUFFICIENT_PERMISSIONS"
 	ErrRateLimitExceeded = "RATE_LIMIT_EXCEEDED"
+	ErrBadRequest       = "BAD_REQUEST"
+	ErrValidationFailed = "VALIDATION_FAILED"
 )
 
 // APIError represents a structured API error
@@ -73,4 +77,20 @@ func Forbidden(message string) *APIError {
 
 func Conflict(message string) *APIError {
 	return NewAPIError(ErrConflict, message)
+}
+
+func AlreadyExists(message string) *APIError {
+	return NewAPIError(ErrAlreadyExists, message)
+}
+
+func InvalidCredentials(message string) *APIError {
+	return NewAPIError(ErrInvalidCredentials, message)
+}
+
+func BadRequest(message string) *APIError {
+	return NewAPIError(ErrBadRequest, message)
+}
+
+func ValidationFailed(message string, details interface{}) *APIError {
+	return NewAPIErrorWithDetails(ErrValidationFailed, message, details)
 }

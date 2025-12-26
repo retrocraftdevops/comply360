@@ -47,6 +47,8 @@ func (r *UserRepository) GetByID(tenantID, userID uuid.UUID) (*models.User, erro
 	`
 
 	user := &models.User{}
+	var mfaSecret sql.NullString
+
 	err := r.db.QueryRow(query, userID, tenantID).Scan(
 		&user.ID,
 		&user.TenantID,
@@ -59,7 +61,7 @@ func (r *UserRepository) GetByID(tenantID, userID uuid.UUID) (*models.User, erro
 		&user.EmailVerifiedAt,
 		&user.MFAEnabled,
 		&user.MFAMethod,
-		&user.MFASecret,
+		&mfaSecret,
 		&user.FailedLoginAttempts,
 		&user.LockedUntil,
 		&user.LastLoginAt,
@@ -72,6 +74,11 @@ func (r *UserRepository) GetByID(tenantID, userID uuid.UUID) (*models.User, erro
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Set MFASecret if valid
+	if mfaSecret.Valid {
+		user.MFASecret = mfaSecret.String
 	}
 
 	// Load roles from user_roles table
@@ -91,6 +98,8 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	`
 
 	user := &models.User{}
+	var mfaSecret sql.NullString
+
 	err := r.db.QueryRow(query, email, tenantID).Scan(
 		&user.ID,
 		&user.TenantID,
@@ -103,7 +112,7 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 		&user.EmailVerifiedAt,
 		&user.MFAEnabled,
 		&user.MFAMethod,
-		&user.MFASecret,
+		&mfaSecret,
 		&user.FailedLoginAttempts,
 		&user.LockedUntil,
 		&user.LastLoginAt,
@@ -116,6 +125,11 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Set MFASecret if valid
+	if mfaSecret.Valid {
+		user.MFASecret = mfaSecret.String
 	}
 
 	// Load roles from user_roles table
@@ -328,6 +342,32 @@ func (r *UserRepository) RemoveRole(userID uuid.UUID, role string) error {
 
 	if rowsAffected == 0 {
 		return fmt.Errorf("role not found for user")
+	}
+
+	return nil
+}
+
+// Delete soft deletes a user by setting deleted_at timestamp
+func (r *UserRepository) Delete(tenantID, userID uuid.UUID) error {
+	query := `
+		UPDATE users SET
+			deleted_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+	`
+
+	result, err := r.db.Exec(query, userID, tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found or already deleted")
 	}
 
 	return nil

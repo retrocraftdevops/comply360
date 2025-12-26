@@ -300,3 +300,37 @@ func (r *DocumentRepository) Delete(schema string, tenantID, documentID uuid.UUI
 
 	return nil
 }
+
+// UpdateStatus updates a document's status and optionally sets verified_by
+func (r *DocumentRepository) UpdateStatus(schema string, tenantID, documentID uuid.UUID, status string, verifiedBy *uuid.UUID) error {
+	query := fmt.Sprintf(`
+		UPDATE %s.documents
+		SET status = $1,
+		    verified_at = CASE WHEN $2 = 'verified' THEN CURRENT_TIMESTAMP ELSE verified_at END,
+		    verified_by = CASE WHEN $3::uuid IS NOT NULL THEN $3 ELSE verified_by END,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL
+	`, schema)
+
+	result, err := r.db.Exec(query, status, status, verifiedBy, documentID, tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to update document status: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("document not found")
+	}
+
+	return nil
+}
+
+// ListByRegistration retrieves all documents for a specific registration
+func (r *DocumentRepository) ListByRegistration(schema string, tenantID, registrationID uuid.UUID) ([]*models.Document, error) {
+	documents, _, err := r.List(schema, tenantID, &registrationID, 0, 1000, "", "")
+	return documents, err
+}

@@ -50,26 +50,6 @@ func (t *Tenant) TenantSchema() string {
 	return "tenant_" + strings.ReplaceAll(t.ID.String(), "-", "")
 }
 
-// CreateTenantRequest represents a request to create a new tenant
-type CreateTenantRequest struct {
-	Name             string  `json:"name" binding:"required,min=2,max=255"`
-	Subdomain        string  `json:"subdomain" binding:"required,min=3,max=63,lowercase,alphanum"`
-	CompanyName      string  `json:"company_name" binding:"required"`
-	ContactEmail     string  `json:"contact_email" binding:"required,email"`
-	ContactPhone     string  `json:"contact_phone"`
-	Country          string  `json:"country" binding:"required,len=2,uppercase"`
-	SubscriptionTier string  `json:"subscription_tier" binding:"required,oneof=starter professional enterprise"`
-}
-
-// UpdateTenantRequest represents a request to update a tenant
-type UpdateTenantRequest struct {
-	Name         *string `json:"name,omitempty" binding:"omitempty,min=2,max=255"`
-	CompanyName  *string `json:"company_name,omitempty"`
-	ContactEmail *string `json:"contact_email,omitempty" binding:"omitempty,email"`
-	ContactPhone *string `json:"contact_phone,omitempty"`
-	Status       *string `json:"status,omitempty" binding:"omitempty,oneof=active suspended"`
-}
-
 // TenantListResponse represents a paginated list of tenants
 type TenantListResponse struct {
 	Tenants    []Tenant `json:"tenants"`

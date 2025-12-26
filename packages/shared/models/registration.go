@@ -76,30 +76,6 @@ func (r *Registration) IsCompleted() bool {
 	       r.Status == RegistrationStatusCompleted
 }
 
-// CreateRegistrationRequest represents a request to create a new registration
-type CreateRegistrationRequest struct {
-	ClientID         uuid.UUID              `json:"client_id" binding:"required"`
-	RegistrationType string                 `json:"registration_type" binding:"required,oneof=pty_ltd close_corporation business_name vat_registration"`
-	CompanyName      string                 `json:"company_name" binding:"required,min=2,max=255"`
-	Jurisdiction     string                 `json:"jurisdiction" binding:"required,oneof=ZA ZW"`
-	AssignedTo       *string                `json:"assigned_to,omitempty"`
-	FormData         map[string]interface{} `json:"form_data,omitempty"`
-}
-
-// UpdateRegistrationRequest represents a request to update a registration
-type UpdateRegistrationRequest struct {
-	RegistrationType   *string                `json:"registration_type,omitempty" binding:"omitempty,oneof=pty_ltd close_corporation business_name vat_registration"`
-	CompanyName        *string                `json:"company_name,omitempty" binding:"omitempty,min=2,max=255"`
-	RegistrationNumber *string                `json:"registration_number,omitempty"`
-	Jurisdiction       *string                `json:"jurisdiction,omitempty" binding:"omitempty,oneof=ZA ZW"`
-	Status             *string                `json:"status,omitempty" binding:"omitempty,oneof=draft submitted in_review approved rejected cancelled completed"`
-	RejectionReason    *string                `json:"rejection_reason,omitempty"`
-	AssignedTo         *string                `json:"assigned_to,omitempty"`
-	CIPCReference      *string                `json:"cipc_reference,omitempty"`
-	DCIPReference      *string                `json:"dcip_reference,omitempty"`
-	FormData           map[string]interface{} `json:"form_data,omitempty"`
-}
-
 // RegistrationListResponse represents a paginated list of registrations
 type RegistrationListResponse struct {
 	Data   []*Registration `json:"data"`

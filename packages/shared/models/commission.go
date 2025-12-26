@@ -57,32 +57,6 @@ func (c *Commission) IsPaid() bool {
 	return c.Status == CommissionStatusPaid
 }
 
-// CreateCommissionRequest represents a request to create a new commission
-type CreateCommissionRequest struct {
-	RegistrationID   uuid.UUID `json:"registration_id" binding:"required"`
-	AgentID          uuid.UUID `json:"agent_id" binding:"required"`
-	RegistrationFee  float64   `json:"registration_fee" binding:"required,gt=0"`
-	CommissionRate   float64   `json:"commission_rate" binding:"required,gte=0,lte=100"`
-	Currency         string    `json:"currency" binding:"required,oneof=ZAR USD ZWL"`
-}
-
-// UpdateCommissionRequest represents a request to update a commission
-type UpdateCommissionRequest struct {
-	Status           *string    `json:"status,omitempty" binding:"omitempty,oneof=pending approved paid cancelled"`
-	PaymentReference *string    `json:"payment_reference,omitempty"`
-	OdooCommissionID *int       `json:"odoo_commission_id,omitempty"`
-}
-
-// ApproveCommissionRequest represents a request to approve a commission
-type ApproveCommissionRequest struct {
-	ApprovedBy uuid.UUID `json:"approved_by" binding:"required"`
-}
-
-// PayCommissionRequest represents a request to mark a commission as paid
-type PayCommissionRequest struct {
-	PaymentReference string `json:"payment_reference" binding:"required"`
-}
-
 // CommissionListResponse represents a paginated list of commissions
 type CommissionListResponse struct {
 	Data   []*Commission `json:"data"`

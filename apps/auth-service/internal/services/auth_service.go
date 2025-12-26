@@ -28,6 +28,14 @@ type AuthService struct {
 	jwtSecret  string
 }
 
+// TokenClaims represents the claims in a JWT token
+type TokenClaims struct {
+	UserID   uuid.UUID `json:"user_id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	Email    string    `json:"email"`
+	Roles    []string  `json:"roles"`
+}
+
 func NewAuthService(userRepo *repository.UserRepository, redis *redis.Client, jwtSecret string) *AuthService {
 	return &AuthService{
 		userRepo:  userRepo,
@@ -273,6 +281,68 @@ func (s *AuthService) VerifyMFA(tenantID, userID uuid.UUID, code string) error {
 	}
 
 	return nil
+}
+
+// ValidateToken validates a JWT token and returns the claims
+func (s *AuthService) ValidateToken(tokenString string) (*TokenClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(s.jwtSecret), nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+
+	// Parse claims into TokenClaims struct
+	userIDStr, ok := claims["sub"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid user ID in token")
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	tenantIDStr, ok := claims["tenant_id"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid tenant ID in token")
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tenant ID format: %w", err)
+	}
+
+	email, _ := claims["email"].(string)
+
+	// Parse roles
+	var roles []string
+	if rolesInterface, ok := claims["roles"].([]interface{}); ok {
+		for _, role := range rolesInterface {
+			if roleStr, ok := role.(string); ok {
+				roles = append(roles, roleStr)
+			}
+		}
+	}
+
+	return &TokenClaims{
+		UserID:   userID,
+		TenantID: tenantID,
+		Email:    email,
+		Roles:    roles,
+	}, nil
 }
 
 // generateAccessToken generates a JWT access token
