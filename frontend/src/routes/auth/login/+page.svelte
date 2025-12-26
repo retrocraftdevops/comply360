@@ -14,28 +14,39 @@
 	});
 
 	async function handleLogin() {
+		console.log('[Login Page] handleLogin called');
+		console.log('[Login Page] Form values:', { email, password: password ? '***' : '(empty)' });
+		
+		if (!email || !password) {
+			console.error('[Login Page] Missing email or password');
+			error = 'Please enter both email and password';
+			return;
+		}
+
 		error = '';
 		isLoading = true;
 
-		console.log('Attempting login with:', { email, password: '***' });
+		console.log('[Login Page] Attempting login with:', { email, password: '***' });
 
 		try {
+			console.log('[Login Page] Calling authActions.login...');
 			const result = await authActions.login(email, password);
 
-			console.log('Login result:', result);
+			console.log('[Login Page] Login result:', result);
 
 			if (result.success) {
-				console.log('Login successful, redirecting to dashboard');
+				console.log('[Login Page] Login successful, redirecting to dashboard');
 				await goto('/app/dashboard');
 			} else {
 				error = result.error || 'Login failed';
-				console.error('Login failed:', error);
+				console.error('[Login Page] Login failed:', error);
 			}
 		} catch (err) {
-			console.error('Login exception:', err);
+			console.error('[Login Page] Login exception:', err);
 			error = 'An unexpected error occurred. Please try again.';
 		} finally {
 			isLoading = false;
+			console.log('[Login Page] handleLogin completed, isLoading:', isLoading);
 		}
 	}
 </script>
