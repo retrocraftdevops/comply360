@@ -1,58 +1,101 @@
-/* Comply360 Branding CSS */
+/* Comply360 Branding - Remove all Odoo references */
 
-/* Hide Odoo branding links */
-a[href*="odoo.com"]:not([class*="comply360"]) {
+/* Hide all Odoo.com links */
+a[href*="odoo.com"],
+a[href*="Odoo.com"],
+a[href*="ODOO.COM"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Hide Powered by Odoo text */
+.o_footer_copyright,
+.o_sub_menu_footer,
+footer a[href*="odoo.com"] {
     display: none !important;
 }
 
-/* Hide "Powered by Odoo" text */
-.o_footer_copyright a[href*="odoo.com"] {
+/* Hide Odoo brand elements */
+.o_brand_odoo,
+.o_odoo_brand,
+[class*="odoo_brand"],
+[class*="brand_odoo"] {
     display: none !important;
 }
 
-/* Replace Odoo references in visible text */
-.o_brand_odoo {
-    display: none !important;
-}
-
-/* Hide Odoo logo references */
+/* Hide Odoo logos */
 img[src*="odoo"],
 img[alt*="Odoo"],
-img[alt*="odoo"] {
+img[alt*="odoo"],
+img[title*="Odoo"],
+img[title*="odoo"] {
     display: none !important;
 }
 
-/* Customize footer for Comply360 */
-.o_footer_copyright::before {
+/* Hide database manager branding */
+.o_database_list_footer a[href*="odoo.com"],
+.o_database_manager footer a[href*="odoo.com"] {
+    display: none !important;
+}
+
+/* Hide Odoo documentation links */
+a[href*="odoo.com/documentation"],
+a[href*="odoo.com/help"] {
+    display: none !important;
+}
+
+/* Replace footer content */
+body::after {
+    content: "";
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: #f9f9f9;
+    text-align: center;
+    line-height: 30px;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #ddd;
+    z-index: 9999;
+}
+
+/* Add Comply360 copyright to body */
+body[data-odoo-app]::after {
     content: "© 2025 Comply360. All rights reserved.";
 }
 
-.o_footer_copyright a[href*="odoo.com"] + span,
-.o_footer_copyright a[href*="odoo.com"] {
-    display: none !important;
+/* Hide any remaining Odoo mentions in text */
+*:not(script):not(style) {
+    text-transform: none;
+}
+
+*:not(script):not(style)::before,
+*:not(script):not(style)::after {
+    content: none;
 }
 
 /* Login page customization */
-.o_login_copyright {
-    color: #6c757d;
-    font-size: 0.875rem;
+.o_database_list h1::after {
+    content: " - Comply360" !important;
 }
 
-/* Database manager customization */
-.o_database_manager_footer {
-    padding: 1rem 0;
-    margin-top: 2rem;
-}
-
-/* Hide Odoo help links */
-a[href*="odoo.com/help"],
-a[href*="odoo.com/documentation"] {
-    display: none !important;
-}
-
-/* Comply360 branding color scheme */
+/* Comply360 color scheme */
 :root {
     --comply360-primary: #2c3e50;
     --comply360-secondary: #3498db;
     --comply360-accent: #e74c3c;
+}
+
+/* Update primary colors to Comply360 branding */
+.btn-primary {
+    background-color: var(--comply360-primary) !important;
+    border-color: var(--comply360-primary) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--comply360-secondary) !important;
+    border-color: var(--comply360-secondary) !important;
 }

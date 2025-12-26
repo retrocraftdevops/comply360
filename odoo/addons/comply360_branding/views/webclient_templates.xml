@@ -1,54 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Remove "Powered by Odoo" from footer -->
-    <template id="web_layout_footer" inherit_id="web.layout" name="Comply360 Footer">
-        <xpath expr="//footer//a[@href='https://www.odoo.com?utm_source=db&amp;utm_medium=portal']" position="replace">
-            <span class="o_footer_copyright">
-                Powered by <a href="https://comply360.com" target="_blank">Comply360</a>
-            </span>
+    <!-- Hide Odoo branding using CSS-based approach -->
+    <template id="remove_odoo_branding" inherit_id="web.webclient_bootstrap" name="Remove Odoo Branding">
+        <xpath expr="//head" position="inside">
+            <style type="text/css">
+                /* Hide all Odoo branding links */
+                a[href*="odoo.com"]:not(.comply360-link) {
+                    display: none !important;
+                }
+
+                /* Hide Powered by Odoo text */
+                .o_footer_copyright a[href*="odoo.com"],
+                .o_sub_menu_footer a[href*="odoo.com"] {
+                    display: none !important;
+                }
+
+                /* Replace footer text */
+                .o_sub_menu_footer::after {
+                    content: "© 2025 Comply360. All rights reserved.";
+                    display: block;
+                    text-align: center;
+                    padding: 10px;
+                    color: #6c757d;
+                    font-size: 0.875rem;
+                }
+            </style>
         </xpath>
     </template>
 
-    <!-- Update login page footer -->
-    <template id="web_login_footer" inherit_id="web.login" name="Comply360 Login Footer">
-        <xpath expr="//div[hasclass('o_login_copyright')]" position="replace">
-            <div class="o_login_copyright text-center small">
-                <span>© 2025 Comply360. All rights reserved.</span>
-            </div>
-        </xpath>
-    </template>
-
-    <!-- Update database manager footer -->
-    <template id="database_manager_footer" inherit_id="web.database_manager" name="Comply360 Database Manager Footer">
-        <xpath expr="//footer" position="replace">
-            <footer class="o_database_manager_footer text-center">
-                <p class="small text-muted">© 2025 Comply360. All rights reserved.</p>
-            </footer>
-        </xpath>
-    </template>
-
-    <!-- Update webclient title -->
-    <template id="web_webclient_title" inherit_id="web.webclient_bootstrap" name="Comply360 Title">
+    <!-- Update page title -->
+    <template id="webclient_title" inherit_id="web.webclient_bootstrap" name="Comply360 Title">
         <xpath expr="//title" position="replace">
             <title>Comply360</title>
-        </xpath>
-    </template>
-
-    <!-- Remove Odoo branding from backend footer -->
-    <template id="backend_footer" inherit_id="web.webclient_bootstrap" name="Comply360 Backend Footer">
-        <xpath expr="//div[hasclass('o_webclient')]//footer" position="replace">
-            <footer class="o_footer">
-                <div class="o_footer_copyright">
-                    <span>© 2025 Comply360</span>
-                </div>
-            </footer>
-        </xpath>
-    </template>
-
-    <!-- Update menu brand link -->
-    <template id="menu_brand" inherit_id="web.webclient_bootstrap" name="Comply360 Menu Brand">
-        <xpath expr="//a[@title='Odoo']" position="attributes">
-            <attribute name="title">Comply360</attribute>
         </xpath>
     </template>
 </odoo>

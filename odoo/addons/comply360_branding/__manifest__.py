@@ -12,16 +12,13 @@
         Features:
         - Removes "Powered by Odoo" footer
         - Customizes login page
-        - Updates page titles
+        - Hides Odoo references
         - Applies Comply360 branding
     """,
     'author': 'Comply360',
     'website': 'https://comply360.com',
     'license': 'LGPL-3',
     'depends': ['base', 'web'],
-    'data': [
-        'views/webclient_templates.xml',
-    ],
     'assets': {
         'web.assets_frontend': [
             'comply360_branding/static/src/css/branding.css',

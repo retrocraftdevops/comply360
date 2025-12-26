@@ -41,16 +41,16 @@ func RateLimiterWithConfig(redisClient *redis.Client, config *RateLimitConfig) g
 			return
 		}
 
-		// Get tenant ID from context (set by TenantMiddleware)
-		tenantIDVal, exists := c.Get("tenant_id")
-		if !exists {
-			// No tenant context, allow request (auth endpoints, etc.)
-			c.Next()
-			return
-		}
+	// Get tenant ID from context (set by TenantMiddleware)
+	tenantIDVal, exists := c.Get("tenant_id")
+	if !exists {
+		// No tenant context, allow request (auth endpoints, etc.)
+		c.Next()
+		return
+	}
 
-		tenantID := tenantIDVal.(string)
-		ctx := context.Background()
+	tenantID := fmt.Sprintf("%v", tenantIDVal)
+	ctx := context.Background()
 
 		// Create rate limit key
 		rateLimitKey := fmt.Sprintf("rate_limit:tenant:%s", tenantID)
