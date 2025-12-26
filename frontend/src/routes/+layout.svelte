@@ -3,11 +3,17 @@
 	import { onMount } from 'svelte';
 	import { authStore, authActions } from '$stores/auth';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 
 	let isLoadingUser = false;
+	let hasCheckedAuth = false;
 
 	onMount(async () => {
+		if (hasCheckedAuth) return;
+		
 		console.log('[Layout] onMount - checking authentication');
+		hasCheckedAuth = true;
+		
 		// Try to load user if access token exists
 		const accessToken = localStorage.getItem('access_token');
 		console.log('[Layout] Access token exists:', !!accessToken);
@@ -21,7 +27,10 @@
 				console.log('[Layout] User loaded successfully');
 			} catch (error) {
 				console.error('[Layout] Failed to load user:', error);
-				authStore.update((state) => ({ ...state, isLoading: false }));
+				// Clear invalid token
+				localStorage.removeItem('access_token');
+				localStorage.removeItem('refresh_token');
+				authStore.update((state) => ({ ...state, isLoading: false, isAuthenticated: false }));
 			} finally {
 				isLoadingUser = false;
 			}
@@ -32,22 +41,17 @@
 	});
 
 	// Redirect to login if not authenticated and not on auth pages
-	// Only redirect if we've finished loading and there's no token
-	$: if (
-		!$authStore.isLoading &&
-		!$authStore.isAuthenticated &&
-		!$page.url.pathname.startsWith('/auth') &&
-		!isLoadingUser
-	) {
-		if (typeof window !== 'undefined') {
-			// Check if we have a token in localStorage (might be logged in but store not updated yet)
-			const token = localStorage.getItem('access_token');
-			if (!token) {
-				console.log('[Layout] No token found, redirecting to login');
-				window.location.href = '/auth/login';
-			} else {
-				console.log('[Layout] Token found but store not authenticated, will wait for store to update');
-				// Don't redirect - the store will update when login completes or onMount will load user
+	// Use a more stable reactive statement that doesn't cause loops
+	$: {
+		if (typeof window === 'undefined') return;
+		if (hasCheckedAuth && !isLoadingUser && !$authStore.isLoading) {
+			const isAuthPage = $page.url.pathname.startsWith('/auth');
+			const hasToken = !!localStorage.getItem('access_token');
+			
+			// Only redirect if we're not on auth pages, not authenticated, and no token
+			if (!isAuthPage && !$authStore.isAuthenticated && !hasToken) {
+				console.log('[Layout] No auth, redirecting to login');
+				goto('/auth/login', { replaceState: true });
 			}
 		}
 	}
