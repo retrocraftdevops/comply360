@@ -1,38 +1,63 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 	import { authStore, authActions } from '$stores/auth';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { afterNavigate } from '$app/navigation';
+	import { beforeNavigate } from '$app/navigation';
 
 	let isLoadingUser = false;
 	let hasCheckedAuth = false;
 	let redirecting = false;
+	let currentPath = '';
+
+	// Use beforeNavigate to check auth before navigation
+	beforeNavigate(({ to, cancel }) => {
+		if (!to) return;
+		
+		const auth = get(authStore);
+		const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+		
+		// Allow navigation to auth pages
+		if (to.url.pathname.startsWith('/auth') || to.url.pathname === '/') {
+			return;
+		}
+		
+		// Redirect to login if not authenticated
+		if (!auth.isAuthenticated && !token && !redirecting) {
+			redirecting = true;
+			cancel();
+			goto('/auth/login', { replaceState: true });
+		}
+	});
 
 	onMount(async () => {
 		if (hasCheckedAuth) return;
 		
+		hasCheckedAuth = true;
+		currentPath = $page.url.pathname;
+		
 		// On auth pages, set loading to false immediately to prevent flash
-		if ($page.url.pathname.startsWith('/auth')) {
+		if (currentPath.startsWith('/auth')) {
 			authStore.update((state) => ({ ...state, isLoading: false }));
-			hasCheckedAuth = true;
 			return;
 		}
 		
-		hasCheckedAuth = true;
-		
 		// Try to load user if access token exists
-		const accessToken = localStorage.getItem('access_token');
+		const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+		const auth = get(authStore);
 		
-		if (accessToken && !$authStore.isAuthenticated && !isLoadingUser) {
+		if (accessToken && !auth.isAuthenticated && !isLoadingUser) {
 			isLoadingUser = true;
 			try {
 				await authActions.loadUser();
 			} catch (error) {
 				// Clear invalid token
-				localStorage.removeItem('access_token');
-				localStorage.removeItem('refresh_token');
+				if (typeof window !== 'undefined') {
+					localStorage.removeItem('access_token');
+					localStorage.removeItem('refresh_token');
+				}
 				authStore.update((state) => ({ ...state, isLoading: false, isAuthenticated: false }));
 			} finally {
 				isLoadingUser = false;
@@ -42,30 +67,11 @@
 		}
 	});
 
-	// Handle navigation changes
-	afterNavigate(() => {
-		// Reset redirect flag on navigation
-		redirecting = false;
-	});
-
-	// Redirect to login if not authenticated - use afterNavigate to prevent loops
-	$: if (
-		typeof window !== 'undefined' &&
-		hasCheckedAuth &&
-		!isLoadingUser &&
-		!$authStore.isLoading &&
-		!redirecting &&
-		!$page.url.pathname.startsWith('/auth') &&
-		$page.url.pathname !== '/' &&
-		!$authStore.isAuthenticated &&
-		!localStorage.getItem('access_token')
-	) {
-		redirecting = true;
-		goto('/auth/login', { replaceState: true });
-	}
+	// Update current path on navigation
+	$: currentPath = $page.url.pathname;
 </script>
 
-{#if $authStore.isLoading && !$page.url.pathname.startsWith('/auth')}
+{#if (isLoadingUser || get(authStore).isLoading) && !currentPath.startsWith('/auth')}
 	<div class="flex h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50/20">
 		<div class="text-center space-y-4">
 			<div class="flex justify-center">

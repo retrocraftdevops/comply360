@@ -19,9 +19,11 @@
 			recentRegistrations = regs.data;
 
 			// Fetch commission summary if user is an agent
-			if ($authStore.user) {
+			// Use get() to read store value non-reactively
+			const auth = $authStore;
+			if (auth.user) {
 				try {
-					const summary = await apiClient.getCommissionSummary($authStore.user.id);
+					const summary = await apiClient.getCommissionSummary(auth.user.id);
 					commissionSummary = summary;
 				} catch (e) {
 					// User might not be an agent
@@ -72,7 +74,7 @@
 			Dashboard
 		</h1>
 		<p class="text-sm text-gray-500 font-medium">
-			Welcome back, <span class="font-semibold text-gray-700">{$authStore.user?.first_name || 'User'}</span>! Here's what's happening today.
+			Welcome back, <span class="font-semibold text-gray-700">{($authStore.user?.first_name) || 'User'}</span>! Here's what's happening today.
 		</p>
 	</div>
 

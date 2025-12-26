@@ -53,14 +53,14 @@
 				
 				<!-- User Menu -->
 				<div class="flex items-center space-x-4">
-					<div class="hidden sm:flex items-center space-x-3 px-4 py-2 rounded-lg bg-gray-50/50">
-						<div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-							{$authStore.user?.first_name?.[0] || 'U'}
-						</div>
-						<span class="text-sm font-medium text-gray-700">
-							{$authStore.user?.first_name || ''} {$authStore.user?.last_name || ''}
-						</span>
+				<div class="hidden sm:flex items-center space-x-3 px-4 py-2 rounded-lg bg-gray-50/50">
+					<div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+						{($authStore.user?.first_name?.[0]) || 'U'}
 					</div>
+					<span class="text-sm font-medium text-gray-700">
+						{($authStore.user?.first_name) || ''} {($authStore.user?.last_name) || ''}
+					</span>
+				</div>
 					<button
 						type="button"
 						on:click={handleLogout}
