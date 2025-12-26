@@ -4,21 +4,26 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/comply360/integration-service/internal/adapters"
+	"github.com/comply360/integration-service/internal/consumers"
 	"github.com/comply360/integration-service/internal/handlers"
 	"github.com/comply360/integration-service/internal/services"
 	"github.com/gin-gonic/gin"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
 	// Load configuration from environment
 	port := getEnv("INTEGRATION_SERVICE_PORT", "8086")
+	rabbitURL := getEnv("RABBITMQ_URL", "amqp://comply360:dev_password@localhost:5672/")
 
 	// Odoo configuration
 	odooConfig := &adapters.OdooConfig{
-		URL:      getEnv("ODOO_URL", "http://localhost:6000"),
-		Database: getEnv("ODOO_DATABASE", "comply360_dev"),
+		URL:      getEnv("ODOO_URL", "http://localhost:8069"),
+		Database: getEnv("ODOO_DATABASE", "comply360_odoo"),
 		Username: getEnv("ODOO_USERNAME", "admin"),
 		Password: getEnv("ODOO_PASSWORD", "admin"),
 	}
@@ -39,15 +44,46 @@ func main() {
 	// Initialize handlers
 	odooHandler := handlers.NewOdooHandler(odooService)
 
+	// Connect to RabbitMQ
+	rabbitConn, err := amqp.Dial(rabbitURL)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to RabbitMQ: %v", err)
+		log.Println("Integration service will start but event consumption will be unavailable")
+	} else {
+		log.Println("Connected to RabbitMQ")
+
+		// Initialize and start Odoo sync consumer
+		odooSyncConsumer, err := consumers.NewOdooSyncConsumer(rabbitConn, odooService)
+		if err != nil {
+			log.Printf("Warning: Failed to create Odoo sync consumer: %v", err)
+		} else {
+			if err := odooSyncConsumer.Start(); err != nil {
+				log.Printf("Warning: Failed to start Odoo sync consumer: %v", err)
+			} else {
+				defer odooSyncConsumer.Close()
+			}
+		}
+		defer rabbitConn.Close()
+	}
+
 	// Setup router
 	r := setupRouter(odooHandler)
 
-	// Start server
-	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Integration Service starting on %s", addr)
-	if err := r.Run(addr); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	// Start HTTP server in goroutine
+	go func() {
+		addr := fmt.Sprintf(":%s", port)
+		log.Printf("Integration Service starting on %s", addr)
+		if err := r.Run(addr); err != nil {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down Integration Service...")
 }
 
 func setupRouter(odooHandler *handlers.OdooHandler) *gin.Engine {
