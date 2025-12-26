@@ -5,31 +5,36 @@
 	import { authStore, authActions } from '$stores/auth';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { afterNavigate } from '$app/navigation';
 
 	let isLoadingUser = false;
-	let hasCheckedAuth = false;
-	let lastRedirectPath = '';
-	let currentPath = '';
 	let showLoading = false;
 
-	onMount(async () => {
-		if (hasCheckedAuth) return;
+	// Check auth and redirect if needed - NO reactive statements
+	async function checkAuth() {
+		const path = $page.url.pathname;
 		
-		hasCheckedAuth = true;
-		currentPath = $page.url.pathname;
-		
-		// On auth pages, set loading to false immediately to prevent flash
-		if (currentPath.startsWith('/auth') || currentPath === '/') {
+		// Allow auth pages and root
+		if (path.startsWith('/auth') || path === '/') {
 			authStore.update((state) => ({ ...state, isLoading: false }));
 			return;
 		}
 		
-		// Try to load user if access token exists
-		const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+		// Check if authenticated
 		const auth = get(authStore);
+		const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 		
-		if (accessToken && !auth.isAuthenticated && !isLoadingUser) {
+		// If not authenticated and no token, redirect to login
+		if (!auth.isAuthenticated && !token) {
+			authStore.update((state) => ({ ...state, isLoading: false }));
+			goto('/auth/login', { replaceState: true });
+			return;
+		}
+		
+		// If token exists but not authenticated, try to load user
+		if (token && !auth.isAuthenticated && !isLoadingUser) {
 			isLoadingUser = true;
+			showLoading = true;
 			try {
 				await authActions.loadUser();
 			} catch (error) {
@@ -39,46 +44,28 @@
 					localStorage.removeItem('refresh_token');
 				}
 				authStore.update((state) => ({ ...state, isLoading: false, isAuthenticated: false }));
+				goto('/auth/login', { replaceState: true });
 			} finally {
 				isLoadingUser = false;
+				showLoading = false;
 			}
 		} else {
 			authStore.update((state) => ({ ...state, isLoading: false }));
+			showLoading = false;
 		}
+	}
+
+	onMount(() => {
+		checkAuth();
 	});
 
-	// Update current path and loading state
-	$: {
-		currentPath = $page.url.pathname;
-		showLoading = (isLoadingUser || $authStore.isLoading) && !currentPath.startsWith('/auth');
-	}
+	// Check auth after navigation - this is stable and won't cause loops
+	afterNavigate(() => {
+		checkAuth();
+	});
 
-	// Separate reactive statement for redirect - only runs when path changes
-	$: if (
-		typeof window !== 'undefined' &&
-		hasCheckedAuth &&
-		!isLoadingUser &&
-		!$authStore.isLoading &&
-		currentPath &&
-		!currentPath.startsWith('/auth') &&
-		currentPath !== '/' &&
-		!get(authStore).isAuthenticated &&
-		!localStorage.getItem('access_token') &&
-		lastRedirectPath !== currentPath
-	) {
-		lastRedirectPath = currentPath;
-		// Use requestAnimationFrame to break reactive cycle and prevent loops
-		requestAnimationFrame(() => {
-			if (lastRedirectPath === currentPath) {
-				goto('/auth/login', { replaceState: true });
-			}
-		});
-	}
-
-	// Reset redirect path when on auth page
-	$: if (currentPath.startsWith('/auth')) {
-		lastRedirectPath = '';
-	}
+	// Only update loading state reactively - no redirects here
+	$: showLoading = (isLoadingUser || $authStore.isLoading) && !$page.url.pathname.startsWith('/auth');
 </script>
 
 {#if showLoading}
