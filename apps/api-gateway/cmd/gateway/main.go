@@ -70,28 +70,37 @@ func setupRouter(db *sql.DB, redisClient *redis.Client, jwtSecret string) *gin.E
 
 	r := gin.Default()
 
-	// CORS middleware - more permissive for development
+	// CORS middleware - permissive for development
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://localhost:3000",
-			"http://localhost:5173",
-			"http://localhost:5174",
-			"http://localhost:5175",
-			"http://localhost:5176",
-			"http://127.0.0.1:5173",
-			"http://127.0.0.1:5174",
-			"http://127.0.0.1:5175",
-			"http://127.0.0.1:5176",
+		AllowOriginFunc: func(origin string) bool {
+			// Allow any localhost origin for development
+			if origin == "" {
+				return true // Allow requests with no origin (e.g., Postman, curl)
+			}
+			allowedOrigins := []string{
+				"http://localhost:3000",
+				"http://localhost:5173",
+				"http://localhost:5174",
+				"http://localhost:5175",
+				"http://localhost:5176",
+				"http://127.0.0.1:5173",
+				"http://127.0.0.1:5174",
+				"http://127.0.0.1:5175",
+				"http://127.0.0.1:5176",
+			}
+			for _, allowed := range allowedOrigins {
+				if origin == allowed {
+					return true
+				}
+			}
+			// Also allow any localhost with any port for development
+			return origin != "" && (origin[:16] == "http://localhost:" || origin[:15] == "http://127.0.0.1:")
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Tenant-ID", "Accept", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type", "Authorization"},
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
-		AllowOriginFunc: func(origin string) bool {
-			// Allow any localhost origin for development
-			return true
-		},
 	}))
 
 	// Global middleware
