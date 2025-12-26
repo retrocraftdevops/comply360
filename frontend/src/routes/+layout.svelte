@@ -27,6 +27,7 @@
 	});
 
 	// Redirect to login if not authenticated and not on auth pages
+	// Only redirect if we've finished loading and there's no token
 	$: if (
 		!$authStore.isLoading &&
 		!$authStore.isAuthenticated &&
@@ -39,12 +40,9 @@
 				console.log('[Layout] No token found, redirecting to login');
 				window.location.href = '/auth/login';
 			} else {
-				console.log('[Layout] Token found, trying to load user');
-				// Token exists but store not updated - try loading user
-				authActions.loadUser().catch(() => {
-					console.log('[Layout] Failed to load user, redirecting to login');
-					window.location.href = '/auth/login';
-				});
+				console.log('[Layout] Token found but store not authenticated, waiting for store to update...');
+				// Don't redirect - let the store update first
+				// The store will update when the login completes
 			}
 		}
 	}

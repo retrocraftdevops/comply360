@@ -17,10 +17,14 @@
 			user: $authStore.user
 		});
 
-		// If already authenticated, redirect to dashboard
-		if ($authStore.isAuthenticated || localStorage.getItem('access_token')) {
-			console.log('[Login Page] Already authenticated, redirecting to dashboard');
+		// Only redirect if both token exists AND store is authenticated
+		// This prevents redirect loops
+		if ($authStore.isAuthenticated && $authStore.user) {
+			console.log('[Login Page] Already authenticated with user, redirecting to dashboard');
 			goto('/app/dashboard');
+		} else if (localStorage.getItem('access_token') && !$authStore.isAuthenticated) {
+			console.log('[Login Page] Token exists but store not updated, waiting...');
+			// Don't redirect - let the store update first
 		}
 	});
 
