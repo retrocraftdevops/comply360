@@ -48,9 +48,12 @@ export const authActions = {
 
 			const response: AuthResponse = await apiClient.login({ email, password });
 
+			// Extract roles from user object
+			const roles = response.user.roles || response.roles || [];
+
 			authStore.set({
 				user: response.user,
-				roles: response.roles,
+				roles,
 				isAuthenticated: true,
 				isLoading: false
 			});
@@ -58,9 +61,10 @@ export const authActions = {
 			return { success: true };
 		} catch (error: any) {
 			authStore.update((state) => ({ ...state, isLoading: false }));
+			console.error('Login error:', error);
 			return {
 				success: false,
-				error: error.response?.data?.message || 'Login failed'
+				error: error.response?.data?.message || error.message || 'Login failed'
 			};
 		}
 	},

@@ -8,6 +8,7 @@ export interface User {
 	status: 'active' | 'suspended' | 'locked' | 'deleted';
 	email_verified: boolean;
 	mfa_enabled: boolean;
+	roles?: string[];
 	created_at: string;
 	updated_at: string;
 }

@@ -1,25 +1,42 @@
 <script lang="ts">
 	import { authActions } from '$stores/auth';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	let email = '';
 	let password = '';
 	let isLoading = false;
 	let error = '';
 
+	// For debugging - check if we're already logged in
+	onMount(() => {
+		console.log('Login page mounted');
+	});
+
 	async function handleLogin() {
 		error = '';
 		isLoading = true;
 
-		const result = await authActions.login(email, password);
+		console.log('Attempting login with:', { email, password: '***' });
 
-		if (result.success) {
-			goto('/app/dashboard');
-		} else {
-			error = result.error || 'Login failed';
+		try {
+			const result = await authActions.login(email, password);
+
+			console.log('Login result:', result);
+
+			if (result.success) {
+				console.log('Login successful, redirecting to dashboard');
+				await goto('/app/dashboard');
+			} else {
+				error = result.error || 'Login failed';
+				console.error('Login failed:', error);
+			}
+		} catch (err) {
+			console.error('Login exception:', err);
+			error = 'An unexpected error occurred. Please try again.';
+		} finally {
+			isLoading = false;
 		}
-
-		isLoading = false;
 	}
 </script>
 
