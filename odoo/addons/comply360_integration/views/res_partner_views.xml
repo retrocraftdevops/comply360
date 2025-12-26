@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Extend Partner Form View -->
+        <record id="view_partner_form_comply360" model="ir.ui.view">
+            <field name="name">res.partner.form.comply360</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <!-- Add Comply360 tab -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Comply360" invisible="not x_comply360_client_id and not x_comply360_agent_id">
+                        <group>
+                            <group string="Client Information" invisible="not x_comply360_client_id">
+                                <field name="x_comply360_client_id" readonly="1"/>
+                                <field name="x_comply360_registration_numbers"/>
+                                <field name="x_comply360_sync_date" readonly="1"/>
+                            </group>
+                            <group string="Agent Information" invisible="not x_is_comply360_agent">
+                                <field name="x_is_comply360_agent"/>
+                                <field name="x_comply360_agent_id" readonly="1"/>
+                                <field name="x_comply360_total_commissions" widget="monetary"/>
+                                <field name="x_comply360_pending_commissions" widget="monetary"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <div class="mt16" invisible="not x_is_comply360_agent">
+                            <button name="action_view_comply360_commissions" string="View Commissions" type="object" class="btn-primary" icon="fa-money"/>
+                        </div>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Add Comply360 filters to partners -->
+        <record id="view_partner_search_comply360" model="ir.ui.view">
+            <field name="name">res.partner.search.comply360</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='customer']" position="after">
+                    <separator/>
+                    <filter string="Comply360 Clients" name="comply360_clients" domain="[('x_comply360_client_id', '!=', False)]"/>
+                    <filter string="Comply360 Agents" name="comply360_agents" domain="[('x_is_comply360_agent', '=', True)]"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

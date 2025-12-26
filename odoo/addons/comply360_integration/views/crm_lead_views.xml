@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Extend CRM Lead Form View -->
+        <record id="view_crm_lead_form_comply360" model="ir.ui.view">
+            <field name="name">crm.lead.form.comply360</field>
+            <field name="model">crm.lead</field>
+            <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+            <field name="arch" type="xml">
+                <!-- Add Comply360 tab -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Comply360" invisible="not x_comply360_registration_id">
+                        <group>
+                            <group string="Registration Details">
+                                <field name="x_comply360_registration_id" readonly="1"/>
+                                <field name="x_comply360_registration_type"/>
+                                <field name="x_comply360_registration_number"/>
+                                <field name="x_comply360_status"/>
+                            </group>
+                            <group string="Synchronization">
+                                <field name="x_comply360_sync_date" readonly="1"/>
+                                <field name="x_comply360_document_count" readonly="1"/>
+                                <field name="x_comply360_verified" readonly="1"/>
+                            </group>
+                        </group>
+                        <div class="mt16">
+                            <button name="action_view_comply360_portal" string="View in Comply360 Portal" type="object" class="btn-primary" icon="fa-external-link"/>
+                        </div>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Add Comply360 filter to leads -->
+        <record id="view_crm_lead_search_comply360" model="ir.ui.view">
+            <field name="name">crm.lead.search.comply360</field>
+            <field name="model">crm.lead</field>
+            <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search/filter[last()]" position="after">
+                    <separator/>
+                    <filter string="From Comply360" name="comply360" domain="[('x_comply360_registration_id', '!=', False)]"/>
+                    <filter string="Documents Verified" name="verified" domain="[('x_comply360_verified', '=', True)]"/>
+                    <separator/>
+                    <filter string="Registration Status: Submitted" name="status_submitted" domain="[('x_comply360_status', '=', 'submitted')]"/>
+                    <filter string="Registration Status: Under Review" name="status_review" domain="[('x_comply360_status', '=', 'under_review')]"/>
+                    <filter string="Registration Status: Approved" name="status_approved" domain="[('x_comply360_status', '=', 'approved')]"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

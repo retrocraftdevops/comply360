@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Main Comply360 Menu -->
+        <menuitem id="menu_comply360_root" name="Comply360" sequence="100" web_icon="comply360_integration,static/description/icon.png"/>
+
+        <!-- Commissions Menu -->
+        <menuitem id="menu_comply360_commissions" name="Commissions" parent="menu_comply360_root" sequence="10" action="action_commission"/>
+
+        <!-- Configuration Menu -->
+        <menuitem id="menu_comply360_config" name="Configuration" parent="menu_comply360_root" sequence="100"/>
+
+    </data>
+</odoo>
