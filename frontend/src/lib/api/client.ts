@@ -46,8 +46,27 @@ class APIClient {
 
 		// Response interceptor for error handling
 		this.client.interceptors.response.use(
-			(response) => response,
+			(response) => {
+				console.log('[API Client] Response received:', {
+					url: response.config.url,
+					status: response.status,
+					headers: response.headers
+				});
+				return response;
+			},
 			async (error) => {
+				console.error('[API Client] Response error:', {
+					url: error.config?.url,
+					method: error.config?.method,
+					status: error.response?.status,
+					statusText: error.response?.statusText,
+					data: error.response?.data,
+					message: error.message,
+					code: error.code,
+					cors: error.code === 'ERR_NETWORK' || error.message?.includes('CORS'),
+					headers: error.response?.headers
+				});
+				
 				if (error.response?.status === 401) {
 					// Token expired, try to refresh
 					const refreshed = await this.refreshToken();
