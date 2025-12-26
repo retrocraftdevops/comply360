@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import apiClient from '$api/client';
 	import type { Client } from '$types';
 
@@ -288,7 +289,7 @@
 		<div class="flex min-h-screen items-center justify-center px-4 py-4 text-center sm:p-0">
 			<!-- Backdrop -->
 			<div 
-				class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity animate-fade-in" 
+				class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" 
 				on:click={() => showCreateModal = false}
 				transition:fade={{ duration: 200 }}
 			></div>
