@@ -74,11 +74,16 @@
 @layer components {
 	/* Modern card component */
 	.card {
-		@apply rounded-xl bg-white shadow-soft border border-gray-100/50 transition-all duration-300;
+		@apply rounded-xl bg-white border border-gray-100/50 transition-all duration-300;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 	}
 	
 	.card-hover {
-		@apply hover:shadow-medium hover:-translate-y-0.5;
+		@apply hover:-translate-y-0.5;
+	}
+	
+	.card-hover:hover {
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 	}
 	
 	/* Modern button styles */
