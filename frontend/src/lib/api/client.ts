@@ -18,13 +18,13 @@ class APIClient {
 	private client: AxiosInstance;
 	private tenantSubdomain: string | null = null;
 
-	constructor(baseURL: string = '/api/v1') {
+	constructor(baseURL: string = 'http://localhost:8080/api/v1') {
 		this.client = axios.create({
 			baseURL,
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			withCredentials: true
+			withCredentials: false  // Changed to false for direct API calls
 		});
 
 		// Set default tenant ID for development
