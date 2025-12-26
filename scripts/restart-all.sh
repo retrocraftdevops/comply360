@@ -5,6 +5,11 @@
 
 set -e
 
+# Setup Go environment
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+
 PROJECT_ROOT="/home/rodrickmakore/projects/comply360"
 cd "$PROJECT_ROOT"
 
