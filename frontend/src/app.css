@@ -92,7 +92,12 @@
 	}
 	
 	.btn-primary {
-		@apply bg-primary text-white shadow-sm hover:bg-primary-600 hover:shadow-md focus:ring-primary;
+		@apply bg-primary text-white shadow-sm focus:ring-primary;
+	}
+	
+	.btn-primary:hover {
+		background-color: hsl(221 83% 45%);
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	}
 	
 	.btn-secondary {
