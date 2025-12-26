@@ -19,6 +19,21 @@ func NewCommissionRepository(db *sql.DB) *CommissionRepository {
 
 // Create creates a new commission record
 func (r *CommissionRepository) Create(schema string, commission *models.Commission) error {
+	fmt.Printf("DEBUG REPO: Schema parameter received: '%s' (len=%d)\n", schema, len(schema))
+
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Set tenant context for RLS - CRITICAL for FK constraint checks!
+	_, err = tx.Exec(fmt.Sprintf("SET LOCAL app.current_tenant_id = '%s'", commission.TenantID.String()))
+	if err != nil {
+		return fmt.Errorf("failed to set tenant context: %w", err)
+	}
+
 	query := fmt.Sprintf(`
 		INSERT INTO %s.commissions (
 			tenant_id, registration_id, agent_id,
@@ -33,11 +48,11 @@ func (r *CommissionRepository) Create(schema string, commission *models.Commissi
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
 
-	fmt.Printf("DEBUG REPO: Query: %s\n", query)
+	fmt.Printf("DEBUG REPO: Query length: %d bytes\n", len(query))
 	fmt.Printf("DEBUG REPO: Params: tenantID=%s, regID=%s, agentID=%s\n",
 		commission.TenantID, commission.RegistrationID, commission.AgentID)
 
-	err = r.db.QueryRow(
+	err = tx.QueryRow(
 		query,
 		commission.TenantID,
 		commission.RegistrationID,
@@ -53,6 +68,11 @@ func (r *CommissionRepository) Create(schema string, commission *models.Commissi
 	if err != nil {
 		fmt.Printf("DEBUG REPO ERROR: %v\n", err)
 		return fmt.Errorf("database insert failed: %w", err)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	fmt.Printf("DEBUG REPO SUCCESS: Created commission ID=%s\n", commission.ID)

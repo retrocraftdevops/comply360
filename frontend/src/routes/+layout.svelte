@@ -12,10 +12,12 @@
 
 	// Check auth and redirect if needed - NO reactive statements
 	async function checkAuth() {
+		console.log('[Layout v2.0] checkAuth called - path:', $page.url.pathname);
 		const path = $page.url.pathname;
 		
 		// Allow auth pages and root
 		if (path.startsWith('/auth') || path === '/') {
+			console.log('[Layout v2.0] Auth page, skipping check');
 			authStore.update((state) => ({ ...state, isLoading: false }));
 			return;
 		}
@@ -23,9 +25,11 @@
 		// Check if authenticated
 		const auth = get(authStore);
 		const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+		console.log('[Layout v2.0] Auth check:', { authenticated: auth.isAuthenticated, hasToken: !!token });
 		
 		// If not authenticated and no token, redirect to login
 		if (!auth.isAuthenticated && !token) {
+			console.log('[Layout v2.0] Not authenticated, redirecting to login');
 			authStore.update((state) => ({ ...state, isLoading: false }));
 			goto('/auth/login', { replaceState: true });
 			return;
@@ -33,11 +37,14 @@
 		
 		// If token exists but not authenticated, try to load user
 		if (token && !auth.isAuthenticated && !isLoadingUser) {
+			console.log('[Layout v2.0] Token exists, loading user...');
 			isLoadingUser = true;
 			showLoading = true;
 			try {
 				await authActions.loadUser();
+				console.log('[Layout v2.0] User loaded successfully');
 			} catch (error) {
+				console.error('[Layout v2.0] Failed to load user:', error);
 				// Clear invalid token
 				if (typeof window !== 'undefined') {
 					localStorage.removeItem('access_token');
@@ -50,17 +57,20 @@
 				showLoading = false;
 			}
 		} else {
+			console.log('[Layout v2.0] Already authenticated or loading');
 			authStore.update((state) => ({ ...state, isLoading: false }));
 			showLoading = false;
 		}
 	}
 
 	onMount(() => {
+		console.log('[Layout v2.0] onMount - NEW VERSION LOADED');
 		checkAuth();
 	});
 
 	// Check auth after navigation - this is stable and won't cause loops
 	afterNavigate(() => {
+		console.log('[Layout v2.0] afterNavigate - checking auth');
 		checkAuth();
 	});
 
