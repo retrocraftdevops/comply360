@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { authActions } from '$stores/auth';
+	import { authActions, authStore } from '$stores/auth';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
@@ -11,6 +11,17 @@
 	// For debugging - check if we're already logged in
 	onMount(() => {
 		console.log('Login page mounted');
+		console.log('[Login Page] Auth state:', {
+			isAuthenticated: $authStore.isAuthenticated,
+			hasToken: !!localStorage.getItem('access_token'),
+			user: $authStore.user
+		});
+
+		// If already authenticated, redirect to dashboard
+		if ($authStore.isAuthenticated || localStorage.getItem('access_token')) {
+			console.log('[Login Page] Already authenticated, redirecting to dashboard');
+			goto('/app/dashboard');
+		}
 	});
 
 	async function handleLogin() {
