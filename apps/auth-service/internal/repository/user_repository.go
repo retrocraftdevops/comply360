@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/comply360/shared/models"
 	"github.com/google/uuid"
@@ -120,7 +121,7 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	}
 	defer tx.Rollback()
 
-	// Set tenant context for RLS
+	// Set tenant context for RLS and search path
 	_, err = tx.Exec("SET LOCAL app.is_global_admin = 'true'")
 	if err != nil {
 		return nil, fmt.Errorf("failed to set admin context: %w", err)
@@ -128,6 +129,13 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	_, err = tx.Exec(fmt.Sprintf("SET LOCAL app.current_tenant_id = '%s'", tenantID.String()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to set tenant context: %w", err)
+	}
+	
+	// Set search path to tenant schema (UUID without dashes)
+	schemaName := fmt.Sprintf("tenant_%s", strings.ReplaceAll(tenantID.String(), "-", ""))
+	_, err = tx.Exec(fmt.Sprintf("SET LOCAL search_path TO %s, public", schemaName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to set search path: %w", err)
 	}
 
 	query := `
