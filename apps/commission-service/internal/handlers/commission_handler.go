@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -68,8 +69,10 @@ func (h *CommissionHandler) CreateCommission(c *gin.Context) {
 	}
 
 	// Create commission
+	schemaStr := schema.(string)
+	fmt.Printf("DEBUG: Creating commission in schema: %s, tenant: %s, reg: %s\n", schemaStr, tenantID, registrationID)
 	commission, err := h.service.CreateCommission(
-		schema.(string),
+		schemaStr,
 		tenantID,
 		registrationID,
 		agentID,

@@ -9,11 +9,20 @@
 	let error = '';
 	let hasRedirected = false;
 
-	// Check if already authenticated - only redirect once
-	$: if ($authStore.isAuthenticated && $authStore.user && !isLoading && !hasRedirected) {
+	// Check if already authenticated - only redirect once, use onMount to prevent reactive loops
+	onMount(() => {
+		if ($authStore.isAuthenticated && $authStore.user) {
+			hasRedirected = true;
+			goto('/app/dashboard', { replaceState: true });
+		}
+	});
+	
+	// Also check reactively but with guard
+	$: if ($authStore.isAuthenticated && $authStore.user && !isLoading && !hasRedirected && typeof window !== 'undefined') {
 		hasRedirected = true;
-		console.log('[Login Page] Already authenticated, redirecting to dashboard');
-		goto('/app/dashboard', { replaceState: true });
+		setTimeout(() => {
+			goto('/app/dashboard', { replaceState: true });
+		}, 0);
 	}
 
 	async function handleLogin() {

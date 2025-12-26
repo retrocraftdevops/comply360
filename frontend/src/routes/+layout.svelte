@@ -4,9 +4,11 @@
 	import { authStore, authActions } from '$stores/auth';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { afterNavigate } from '$app/navigation';
 
 	let isLoadingUser = false;
 	let hasCheckedAuth = false;
+	let redirecting = false;
 
 	onMount(async () => {
 		if (hasCheckedAuth) return;
@@ -18,22 +20,16 @@
 			return;
 		}
 		
-		console.log('[Layout] onMount - checking authentication');
 		hasCheckedAuth = true;
 		
 		// Try to load user if access token exists
 		const accessToken = localStorage.getItem('access_token');
-		console.log('[Layout] Access token exists:', !!accessToken);
-		console.log('[Layout] Auth store authenticated:', $authStore.isAuthenticated);
 		
 		if (accessToken && !$authStore.isAuthenticated && !isLoadingUser) {
-			console.log('[Layout] Loading user from token...');
 			isLoadingUser = true;
 			try {
 				await authActions.loadUser();
-				console.log('[Layout] User loaded successfully');
 			} catch (error) {
-				console.error('[Layout] Failed to load user:', error);
 				// Clear invalid token
 				localStorage.removeItem('access_token');
 				localStorage.removeItem('refresh_token');
@@ -42,23 +38,29 @@
 				isLoadingUser = false;
 			}
 		} else {
-			console.log('[Layout] No token or already authenticated, setting isLoading to false');
 			authStore.update((state) => ({ ...state, isLoading: false }));
 		}
 	});
 
-	// Redirect to login if not authenticated and not on auth pages
-	// Use a more stable reactive statement that doesn't cause loops
+	// Handle navigation changes
+	afterNavigate(() => {
+		// Reset redirect flag on navigation
+		redirecting = false;
+	});
+
+	// Redirect to login if not authenticated - use afterNavigate to prevent loops
 	$: if (
 		typeof window !== 'undefined' &&
 		hasCheckedAuth &&
 		!isLoadingUser &&
 		!$authStore.isLoading &&
+		!redirecting &&
 		!$page.url.pathname.startsWith('/auth') &&
+		!$page.url.pathname === '/' &&
 		!$authStore.isAuthenticated &&
 		!localStorage.getItem('access_token')
 	) {
-		console.log('[Layout] No auth, redirecting to login');
+		redirecting = true;
 		goto('/auth/login', { replaceState: true });
 	}
 </script>

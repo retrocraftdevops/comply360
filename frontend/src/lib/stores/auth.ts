@@ -116,6 +116,11 @@ export const authActions = {
 	},
 
 	async loadUser() {
+		// Prevent multiple simultaneous load attempts
+		if (authStore.get().isLoading) {
+			return;
+		}
+		
 		try {
 			authStore.update((state) => ({ ...state, isLoading: true }));
 
@@ -123,7 +128,7 @@ export const authActions = {
 
 			authStore.set({
 				user: response.user,
-				roles: response.roles,
+				roles: response.roles || [],
 				isAuthenticated: true,
 				isLoading: false
 			});

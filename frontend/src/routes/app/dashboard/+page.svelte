@@ -65,7 +65,7 @@
 	}
 </script>
 
-<div class="space-y-8 animate-fade-in">
+<div class="space-y-8">
 	<!-- Header -->
 	<div class="space-y-1">
 		<h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
@@ -86,7 +86,7 @@
 	{:else}
 		<!-- Stats Cards -->
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-			<div class="card card-hover p-6 animate-fade-in" style="animation-delay: 0ms">
+			<div class="card card-hover p-6">
 				<div class="flex items-center justify-between">
 					<div>
 						<p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Registrations</p>
@@ -100,7 +100,7 @@
 				</div>
 			</div>
 
-			<div class="card card-hover p-6 animate-fade-in bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-yellow-200/50" style="animation-delay: 100ms">
+			<div class="card card-hover p-6 bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-yellow-200/50">
 				<div class="flex items-center justify-between">
 					<div>
 						<p class="text-sm font-semibold text-yellow-700 uppercase tracking-wide">Pending Commissions</p>
@@ -116,7 +116,7 @@
 				</div>
 			</div>
 
-			<div class="card card-hover p-6 animate-fade-in bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50" style="animation-delay: 200ms">
+			<div class="card card-hover p-6 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50">
 				<div class="flex items-center justify-between">
 					<div>
 						<p class="text-sm font-semibold text-green-700 uppercase tracking-wide">Paid Commissions</p>
@@ -161,7 +161,7 @@
 					</div>
 				{:else}
 					{#each recentRegistrations as registration, index}
-						<div class="px-6 py-4 table-row animate-fade-in" style="animation-delay: {index * 50}ms">
+						<div class="px-6 py-4 table-row">
 							<div class="flex items-center justify-between">
 								<div class="flex items-center space-x-4">
 									<div class="h-10 w-10 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
