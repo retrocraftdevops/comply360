@@ -9,21 +9,13 @@
 	let error = '';
 	let hasRedirected = false;
 
-	// Check if already authenticated - only redirect once, use onMount to prevent reactive loops
+	// Check if already authenticated - use onMount to prevent reactive loops
 	onMount(() => {
-		if ($authStore.isAuthenticated && $authStore.user) {
+		if ($authStore.isAuthenticated && $authStore.user && !hasRedirected) {
 			hasRedirected = true;
 			goto('/app/dashboard', { replaceState: true });
 		}
 	});
-	
-	// Also check reactively but with guard
-	$: if ($authStore.isAuthenticated && $authStore.user && !isLoading && !hasRedirected && typeof window !== 'undefined') {
-		hasRedirected = true;
-		setTimeout(() => {
-			goto('/app/dashboard', { replaceState: true });
-		}, 0);
-	}
 
 	async function handleLogin() {
 		console.log('[Login Page] handleLogin called');

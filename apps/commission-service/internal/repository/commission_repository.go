@@ -33,6 +33,10 @@ func (r *CommissionRepository) Create(schema string, commission *models.Commissi
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
 
+	fmt.Printf("DEBUG REPO: Query: %s\n", query)
+	fmt.Printf("DEBUG REPO: Params: tenantID=%s, regID=%s, agentID=%s\n",
+		commission.TenantID, commission.RegistrationID, commission.AgentID)
+
 	return r.db.QueryRow(
 		query,
 		commission.TenantID,
