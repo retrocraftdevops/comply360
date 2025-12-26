@@ -56,7 +56,7 @@
 		!$authStore.isLoading &&
 		!redirecting &&
 		!$page.url.pathname.startsWith('/auth') &&
-		!$page.url.pathname === '/' &&
+		$page.url.pathname !== '/' &&
 		!$authStore.isAuthenticated &&
 		!localStorage.getItem('access_token')
 	) {
