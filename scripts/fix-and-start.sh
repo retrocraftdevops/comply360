@@ -29,15 +29,22 @@ pkill -9 -f "cmd/tenant" 2>/dev/null || true
 sleep 3
 echo "[✓] All processes stopped"
 
-# Step 2: Ensure database has tenant
+# Step 2: Ensure database has tenant and unlock admin account
 echo ""
-echo "Step 2: Ensuring default tenant exists..."
+echo "Step 2: Ensuring default tenant exists and unlocking admin account..."
 PGPASSWORD="dev_password" psql -h localhost -U comply360 -d comply360_dev <<EOF
+-- Ensure tenant exists
 INSERT INTO tenants (id, name, subdomain, company_name, contact_email, status, subscription_tier) 
 VALUES ('9ac5aa3e-91cd-451f-b182-563b0d751dc7', 'Default Tenant', 'default', 'Comply360', 'admin@comply360.com', 'active', 'enterprise') 
 ON CONFLICT (id) DO NOTHING;
+
+-- Unlock admin account
+UPDATE tenant_9ac5aa3e91cd451fb182563b0d751dc7.users 
+SET failed_login_attempts = 0,
+    locked_until = NULL
+WHERE email = 'admin@comply360.com';
 EOF
-echo "[✓] Default tenant ready"
+echo "[✓] Default tenant ready and admin account unlocked"
 
 # Step 3: Start API Gateway
 echo ""
