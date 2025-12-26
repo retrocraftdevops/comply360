@@ -6,6 +6,7 @@ import (
 
 	"github.com/comply360/registration-service/internal/services"
 	"github.com/comply360/shared/errors"
+	sharedmiddleware "github.com/comply360/shared/middleware"
 	"github.com/comply360/shared/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -33,15 +34,7 @@ func (h *RegistrationHandler) CreateRegistration(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, errors.NewAPIError(
-			errors.ErrUnauthorized,
-			"User not authenticated",
-		))
-		return
-	}
+	// User ID is validated by auth middleware, will retrieve later if needed
 
 	// Parse request body
 	var registration models.Registration
@@ -55,13 +48,20 @@ func (h *RegistrationHandler) CreateRegistration(c *gin.Context) {
 	}
 
 	// Set tenant ID from context
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, err := sharedmiddleware.GetTenantID(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errors.NewAPIError(
+			errors.ErrInternal,
+			"Failed to get tenant ID from context",
+		))
+		return
+	}
 	registration.TenantID = tenantID
 
 	// Set assigned_to from user ID if not provided
 	if registration.AssignedTo == nil {
-		userIDStr := userID.(string)
+		userIDUUID, _ := sharedmiddleware.GetUserID(c)
+		userIDStr := userIDUUID.String()
 		registration.AssignedTo = &userIDStr
 	}
 
@@ -82,8 +82,7 @@ func (h *RegistrationHandler) CreateRegistration(c *gin.Context) {
 func (h *RegistrationHandler) GetRegistration(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse registration ID
 	registrationID, err := uuid.Parse(c.Param("id"))
@@ -112,8 +111,7 @@ func (h *RegistrationHandler) GetRegistration(c *gin.Context) {
 func (h *RegistrationHandler) ListRegistrations(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse query parameters
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -143,8 +141,7 @@ func (h *RegistrationHandler) ListRegistrations(c *gin.Context) {
 func (h *RegistrationHandler) UpdateRegistration(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse registration ID
 	registrationID, err := uuid.Parse(c.Param("id"))
@@ -188,8 +185,7 @@ func (h *RegistrationHandler) UpdateRegistration(c *gin.Context) {
 func (h *RegistrationHandler) DeleteRegistration(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse registration ID
 	registrationID, err := uuid.Parse(c.Param("id"))

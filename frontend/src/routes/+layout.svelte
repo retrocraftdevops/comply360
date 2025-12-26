@@ -54,10 +54,15 @@
 </script>
 
 {#if $authStore.isLoading}
-	<div class="flex h-screen items-center justify-center">
-		<div class="text-center">
-			<div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-			<p class="text-muted-foreground">Loading...</p>
+	<div class="flex h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50/20">
+		<div class="text-center space-y-4">
+			<div class="flex justify-center">
+				<div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20 animate-pulse">
+					<span class="text-white font-bold text-2xl">C</span>
+				</div>
+			</div>
+			<div class="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-primary-200 border-t-primary-500"></div>
+			<p class="text-sm font-medium text-gray-600">Loading Comply360...</p>
 		</div>
 	</div>
 {:else}
