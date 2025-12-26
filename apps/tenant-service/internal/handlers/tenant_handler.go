@@ -35,7 +35,7 @@ func (h *TenantHandler) CreateTenant(c *gin.Context) {
 	if err != nil {
 		if err.Error() == "subdomain already exists" {
 			c.JSON(http.StatusConflict, errors.NewAPIError(
-				errors.ErrTenantAlreadyExists,
+				errors.ErrAlreadyExists,
 				err.Error(),
 			))
 			return

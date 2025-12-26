@@ -91,10 +91,22 @@ class APIClient {
 
 	// Auth endpoints
 	async login(data: LoginRequest): Promise<AuthResponse> {
-		const response = await this.client.post<AuthResponse>('/auth/login', data);
-		this.setAccessToken(response.data.access_token);
-		this.setRefreshToken(response.data.refresh_token);
-		return response.data;
+		console.log('[API Client] Login request:', { url: this.client.defaults.baseURL + '/auth/login', data: { ...data, password: '***' } });
+		try {
+			const response = await this.client.post<AuthResponse>('/auth/login', data);
+			console.log('[API Client] Login response:', { status: response.status, data: response.data });
+			this.setAccessToken(response.data.access_token);
+			this.setRefreshToken(response.data.refresh_token);
+			return response.data;
+		} catch (error: any) {
+			console.error('[API Client] Login error:', {
+				message: error.message,
+				status: error.response?.status,
+				data: error.response?.data,
+				config: error.config
+			});
+			throw error;
+		}
 	}
 
 	async register(data: RegisterRequest): Promise<AuthResponse> {

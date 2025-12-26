@@ -118,9 +118,6 @@ func (s *TenantService) UpdateTenant(id uuid.UUID, req *models.UpdateTenantReque
 	if req.Name != nil {
 		tenant.Name = *req.Name
 	}
-	if req.CompanyName != nil {
-		tenant.CompanyName = req.CompanyName
-	}
 	if req.ContactEmail != nil {
 		tenant.ContactEmail = req.ContactEmail
 	}
@@ -129,6 +126,9 @@ func (s *TenantService) UpdateTenant(id uuid.UUID, req *models.UpdateTenantReque
 	}
 	if req.Status != nil {
 		tenant.Status = *req.Status
+	}
+	if req.SubscriptionTier != nil {
+		tenant.SubscriptionTier = *req.SubscriptionTier
 	}
 
 	if err := s.repo.Update(tenant); err != nil {

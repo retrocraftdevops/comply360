@@ -43,13 +43,17 @@ export const isAgent = derived(authStore, ($auth) =>
 // Auth actions
 export const authActions = {
 	async login(email: string, password: string) {
+		console.log('[Auth Store] Login called with:', { email, password: '***' });
 		try {
 			authStore.update((state) => ({ ...state, isLoading: true }));
+			console.log('[Auth Store] Calling apiClient.login...');
 
 			const response: AuthResponse = await apiClient.login({ email, password });
+			console.log('[Auth Store] Received response:', response);
 
 			// Extract roles from user object
-			const roles = response.user.roles || response.roles || [];
+			const roles = response.user?.roles || response.roles || [];
+			console.log('[Auth Store] Extracted roles:', roles);
 
 			authStore.set({
 				user: response.user,
@@ -57,11 +61,17 @@ export const authActions = {
 				isAuthenticated: true,
 				isLoading: false
 			});
+			console.log('[Auth Store] Auth state updated successfully');
 
 			return { success: true };
 		} catch (error: any) {
 			authStore.update((state) => ({ ...state, isLoading: false }));
-			console.error('Login error:', error);
+			console.error('[Auth Store] Login error:', error);
+			console.error('[Auth Store] Error details:', {
+				message: error.message,
+				response: error.response?.data,
+				status: error.response?.status
+			});
 			return {
 				success: false,
 				error: error.response?.data?.message || error.message || 'Login failed'
