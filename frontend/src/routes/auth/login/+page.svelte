@@ -66,87 +66,107 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-	<div class="w-full max-w-md space-y-8">
-		<div class="text-center">
-			<h1 class="text-4xl font-bold text-primary">Comply360</h1>
-			<h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
-			<p class="mt-2 text-sm text-gray-600">
+<div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50/20 px-4 py-12 sm:px-6 lg:px-8">
+	<div class="w-full max-w-md space-y-8 animate-fade-in">
+		<!-- Logo and Header -->
+		<div class="text-center space-y-4">
+			<div class="flex justify-center">
+				<div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
+					<span class="text-white font-bold text-2xl">C</span>
+				</div>
+			</div>
+			<h1 class="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+				Comply360
+			</h1>
+			<h2 class="text-2xl font-semibold text-gray-800">Sign in to your account</h2>
+			<p class="text-sm text-gray-500">
 				Don't have an account?
-				<a href="/auth/register" class="font-medium text-primary hover:text-primary/80">
+				<a href="/auth/register" class="font-semibold text-primary-600 hover:text-primary-700 transition-colors duration-200">
 					Register here
 				</a>
 			</p>
 		</div>
 
-		<form class="mt-8 space-y-6" on:submit|preventDefault={handleLogin}>
-			{#if error}
-				<div class="rounded-md bg-red-50 p-4">
-					<p class="text-sm text-red-800">{error}</p>
-				</div>
-			{/if}
+		<!-- Login Form -->
+		<div class="card card-hover p-8">
+			<form class="space-y-5" on:submit|preventDefault={handleLogin}>
+				{#if error}
+					<div class="rounded-xl bg-red-50 border border-red-200 p-4 animate-fade-in">
+						<p class="text-sm font-medium text-red-800">{error}</p>
+					</div>
+				{/if}
 
-			<div class="space-y-4 rounded-md shadow-sm">
-				<div>
-					<label for="email" class="sr-only">Email address</label>
-					<input
-						id="email"
-						name="email"
-						type="email"
-						autocomplete="email"
-						required
-						bind:value={email}
-						class="relative block w-full appearance-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
-						placeholder="Email address"
-					/>
-				</div>
-				<div>
-					<label for="password" class="sr-only">Password</label>
-					<input
-						id="password"
-						name="password"
-						type="password"
-						autocomplete="current-password"
-						required
-						bind:value={password}
-						class="relative block w-full appearance-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
-						placeholder="Password"
-					/>
-				</div>
-			</div>
-
-			<div class="flex items-center justify-between">
-				<div class="flex items-center">
-					<input
-						id="remember-me"
-						name="remember-me"
-						type="checkbox"
-						class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-					/>
-					<label for="remember-me" class="ml-2 block text-sm text-gray-900">Remember me</label>
+				<div class="space-y-4">
+					<div>
+						<label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+							Email address
+						</label>
+						<input
+							id="email"
+							name="email"
+							type="email"
+							autocomplete="email"
+							required
+							bind:value={email}
+							class="input"
+							placeholder="you@example.com"
+						/>
+					</div>
+					<div>
+						<label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+							Password
+						</label>
+						<input
+							id="password"
+							name="password"
+							type="password"
+							autocomplete="current-password"
+							required
+							bind:value={password}
+							class="input"
+							placeholder="••••••••"
+						/>
+					</div>
 				</div>
 
-				<div class="text-sm">
-					<a href="/auth/forgot-password" class="font-medium text-primary hover:text-primary/80">
-						Forgot password?
-					</a>
-				</div>
-			</div>
+				<div class="flex items-center justify-between">
+					<div class="flex items-center">
+						<input
+							id="remember-me"
+							name="remember-me"
+							type="checkbox"
+							class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+						/>
+						<label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
+					</div>
 
-			<div>
-				<button
-					type="submit"
-					disabled={isLoading}
-					class="group relative flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
-				>
-					{#if isLoading}
-						<span class="mr-2">Signing in...</span>
-						<div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-					{:else}
-						Sign in
-					{/if}
-				</button>
-			</div>
-		</form>
+					<div class="text-sm">
+						<a href="/auth/forgot-password" class="font-semibold text-primary-600 hover:text-primary-700 transition-colors duration-200">
+							Forgot password?
+						</a>
+					</div>
+				</div>
+
+				<div class="pt-2">
+					<button
+						type="submit"
+						disabled={isLoading}
+						class="btn btn-primary w-full shadow-md hover:shadow-lg transition-all duration-200"
+					>
+						{#if isLoading}
+							<span class="flex items-center justify-center">
+								<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								Signing in...
+							</span>
+						{:else}
+							Sign in
+						{/if}
+					</button>
+				</div>
+			</form>
+		</div>
 	</div>
 </div>
