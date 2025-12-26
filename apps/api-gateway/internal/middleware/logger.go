@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -16,11 +17,11 @@ func Logger() gin.HandlerFunc {
 		// Get request ID
 		requestID := GetRequestID(c)
 
-		// Get tenant ID if available
-		tenantID := ""
-		if tid, exists := c.Get("tenant_id"); exists {
-			tenantID = tid.(string)
-		}
+	// Get tenant ID if available
+	tenantID := ""
+	if tid, exists := c.Get("tenant_id"); exists {
+		tenantID = fmt.Sprintf("%v", tid)
+	}
 
 		// Process request
 		c.Next()

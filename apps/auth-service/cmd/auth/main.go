@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// Load configuration from environment
-	dbURL := getEnv("DATABASE_URL", "postgres://comply360_user:comply360_password_dev@localhost:5432/comply360_db?sslmode=disable")
+	dbURL := getEnv("DATABASE_URL", "postgres://comply360:dev_password@localhost:5432/comply360_dev?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/0")
 	port := getEnv("AUTH_SERVICE_PORT", "8081")
 	jwtSecret := getEnv("JWT_SECRET", "changeme-change-this-in-production")

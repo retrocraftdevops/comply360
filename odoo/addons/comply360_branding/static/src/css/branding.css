@@ -1,0 +1,58 @@
+/* Comply360 Branding CSS */
+
+/* Hide Odoo branding links */
+a[href*="odoo.com"]:not([class*="comply360"]) {
+    display: none !important;
+}
+
+/* Hide "Powered by Odoo" text */
+.o_footer_copyright a[href*="odoo.com"] {
+    display: none !important;
+}
+
+/* Replace Odoo references in visible text */
+.o_brand_odoo {
+    display: none !important;
+}
+
+/* Hide Odoo logo references */
+img[src*="odoo"],
+img[alt*="Odoo"],
+img[alt*="odoo"] {
+    display: none !important;
+}
+
+/* Customize footer for Comply360 */
+.o_footer_copyright::before {
+    content: "© 2025 Comply360. All rights reserved.";
+}
+
+.o_footer_copyright a[href*="odoo.com"] + span,
+.o_footer_copyright a[href*="odoo.com"] {
+    display: none !important;
+}
+
+/* Login page customization */
+.o_login_copyright {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Database manager customization */
+.o_database_manager_footer {
+    padding: 1rem 0;
+    margin-top: 2rem;
+}
+
+/* Hide Odoo help links */
+a[href*="odoo.com/help"],
+a[href*="odoo.com/documentation"] {
+    display: none !important;
+}
+
+/* Comply360 branding color scheme */
+:root {
+    --comply360-primary: #2c3e50;
+    --comply360-secondary: #3498db;
+    --comply360-accent: #e74c3c;
+}

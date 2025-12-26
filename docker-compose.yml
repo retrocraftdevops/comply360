@@ -76,6 +76,7 @@ services:
       PASSWORD: odoo_secure_pass
       POSTGRES_DB: comply360_odoo
       ADMIN_PASSWORD: admin
+    command: ["--database=comply360_odoo", "--db-filter=^comply360_odoo$", "--no-database-list"]
     ports:
       - "8069:8069"
     volumes:
