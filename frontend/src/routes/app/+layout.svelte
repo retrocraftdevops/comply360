@@ -16,39 +16,55 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gray-100">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
 	<!-- Navigation -->
-	<nav class="bg-white shadow-sm">
+	<nav class="sticky top-0 z-50 glass border-b border-gray-200/50 backdrop-blur-xl">
 		<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-			<div class="flex h-16 justify-between">
-				<div class="flex">
-					<div class="flex flex-shrink-0 items-center">
-						<h1 class="text-2xl font-bold text-primary">Comply360</h1>
-					</div>
-					<div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+			<div class="flex h-16 items-center justify-between">
+				<div class="flex items-center space-x-8">
+					<!-- Logo -->
+					<a href="/app/dashboard" class="flex items-center space-x-2 group">
+						<div class="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow duration-300">
+							<span class="text-white font-bold text-lg">C</span>
+						</div>
+						<h1 class="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+							Comply360
+						</h1>
+					</a>
+					
+					<!-- Navigation Links -->
+					<div class="hidden md:flex items-center space-x-1">
 						{#each navigation as item}
 							<a
 								href={item.href}
-								class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium
+								class="relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
 									{$page.url.pathname.startsWith(item.href)
-									? 'border-primary text-gray-900'
-									: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}"
+									? 'text-primary-600 bg-primary-50'
+									: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'}"
 							>
 								{item.name}
+								{#if $page.url.pathname.startsWith(item.href)}
+									<span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full"></span>
+								{/if}
 							</a>
 						{/each}
 					</div>
 				</div>
-				<div class="flex items-center">
-					<div class="flex-shrink-0">
-						<span class="text-sm text-gray-700">
+				
+				<!-- User Menu -->
+				<div class="flex items-center space-x-4">
+					<div class="hidden sm:flex items-center space-x-3 px-4 py-2 rounded-lg bg-gray-50/50">
+						<div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+							{$authStore.user?.first_name?.[0] || 'U'}
+						</div>
+						<span class="text-sm font-medium text-gray-700">
 							{$authStore.user?.first_name || ''} {$authStore.user?.last_name || ''}
 						</span>
 					</div>
 					<button
 						type="button"
 						on:click={handleLogout}
-						class="ml-4 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+						class="btn btn-ghost text-sm"
 					>
 						Logout
 					</button>
@@ -58,7 +74,7 @@
 	</nav>
 
 	<!-- Main Content -->
-	<main class="py-10">
+	<main class="py-8 animate-fade-in">
 		<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 			<slot />
 		</div>
