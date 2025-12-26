@@ -6,6 +6,7 @@ import (
 
 	"github.com/comply360/commission-service/internal/services"
 	"github.com/comply360/shared/errors"
+	sharedmiddleware "github.com/comply360/shared/middleware"
 	"github.com/comply360/shared/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -34,8 +35,7 @@ func (h *CommissionHandler) CreateCommission(c *gin.Context) {
 	}
 
 	// Get tenant ID from context
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse request body
 	var req models.CreateCommissionRequest
@@ -93,8 +93,7 @@ func (h *CommissionHandler) CreateCommission(c *gin.Context) {
 func (h *CommissionHandler) GetCommission(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse commission ID
 	commissionID, err := uuid.Parse(c.Param("id"))
@@ -123,8 +122,7 @@ func (h *CommissionHandler) GetCommission(c *gin.Context) {
 func (h *CommissionHandler) ListCommissions(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse query parameters
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -170,8 +168,7 @@ func (h *CommissionHandler) ListCommissions(c *gin.Context) {
 func (h *CommissionHandler) GetCommissionSummary(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse agent ID (required)
 	agentIDStr := c.Query("agent_id")
@@ -213,12 +210,10 @@ func (h *CommissionHandler) GetCommissionSummary(c *gin.Context) {
 func (h *CommissionHandler) ApproveCommission(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Get user ID (approver)
-	userIDVal, _ := c.Get("user_id")
-	approvedBy, _ := uuid.Parse(userIDVal.(string))
+	approvedBy, _ := sharedmiddleware.GetUserID(c)
 
 	// Parse commission ID
 	commissionID, err := uuid.Parse(c.Param("id"))
@@ -249,8 +244,7 @@ func (h *CommissionHandler) ApproveCommission(c *gin.Context) {
 func (h *CommissionHandler) MarkCommissionPaid(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse commission ID
 	commissionID, err := uuid.Parse(c.Param("id"))
@@ -292,8 +286,7 @@ func (h *CommissionHandler) MarkCommissionPaid(c *gin.Context) {
 func (h *CommissionHandler) CancelCommission(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse commission ID
 	commissionID, err := uuid.Parse(c.Param("id"))

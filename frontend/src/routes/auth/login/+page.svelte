@@ -7,26 +7,14 @@
 	let password = '';
 	let isLoading = false;
 	let error = '';
+	let hasRedirected = false;
 
-	// For debugging - check if we're already logged in
-	onMount(() => {
-		console.log('Login page mounted');
-		console.log('[Login Page] Auth state:', {
-			isAuthenticated: $authStore.isAuthenticated,
-			hasToken: !!localStorage.getItem('access_token'),
-			user: $authStore.user
-		});
-
-		// Only redirect if both token exists AND store is authenticated
-		// This prevents redirect loops
-		if ($authStore.isAuthenticated && $authStore.user) {
-			console.log('[Login Page] Already authenticated with user, redirecting to dashboard');
-			goto('/app/dashboard');
-		} else if (localStorage.getItem('access_token') && !$authStore.isAuthenticated) {
-			console.log('[Login Page] Token exists but store not updated, waiting...');
-			// Don't redirect - let the store update first
-		}
-	});
+	// Check if already authenticated - only redirect once
+	$: if ($authStore.isAuthenticated && $authStore.user && !isLoading && !hasRedirected) {
+		hasRedirected = true;
+		console.log('[Login Page] Already authenticated, redirecting to dashboard');
+		goto('/app/dashboard', { replaceState: true });
+	}
 
 	async function handleLogin() {
 		console.log('[Login Page] handleLogin called');
@@ -51,7 +39,8 @@
 
 			if (result.success) {
 				console.log('[Login Page] Login successful, redirecting to dashboard');
-				await goto('/app/dashboard');
+				hasRedirected = true;
+				await goto('/app/dashboard', { replaceState: true });
 			} else {
 				error = result.error || 'Login failed';
 				console.error('[Login Page] Login failed:', error);
@@ -67,7 +56,7 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50/20 px-4 py-12 sm:px-6 lg:px-8">
-	<div class="w-full max-w-md space-y-8 animate-fade-in">
+	<div class="w-full max-w-md space-y-8">
 		<!-- Logo and Header -->
 		<div class="text-center space-y-4">
 			<div class="flex justify-center">
@@ -88,10 +77,10 @@
 		</div>
 
 		<!-- Login Form -->
-		<div class="card card-hover p-8">
+		<div class="card p-8">
 			<form class="space-y-5" on:submit|preventDefault={handleLogin}>
 				{#if error}
-					<div class="rounded-xl bg-red-50 border border-red-200 p-4 animate-fade-in">
+					<div class="rounded-xl bg-red-50 border border-red-200 p-4">
 						<p class="text-sm font-medium text-red-800">{error}</p>
 					</div>
 				{/if}
