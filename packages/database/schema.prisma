@@ -1,0 +1,416 @@
+// Comply360 Database Schema
+// Multi-tenant SaaS with Row-Level Security (RLS)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// TENANT & USER MANAGEMENT
+// ============================================
+
+model Tenant {
+  id                String    @id @default(cuid())
+  businessName      String
+  subdomain         String    @unique
+  logoUrl           String?
+  brandColors       Json?
+  status            TenantStatus @default(ACTIVE)
+  subscriptionTier  String    @default("starter")
+  subscriptionStatus String   @default("trial")
+  trialEndsAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  users             User[]
+  registrations     Registration[]
+  documents         Document[]
+  transactions      Transaction[]
+  commissions       Commission[]
+  settings          TenantSettings?
+  
+  @@index([subdomain])
+  @@index([status])
+  @@map("tenants")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model TenantSettings {
+  id                String   @id @default(cuid())
+  tenantId          String   @unique
+  tenant            Tenant   @relation(fields: [tenantId], references: [id])
+  
+  defaultCommissionRate Float  @default(0.15)
+  
+  cipcApiKey        String?   @db.Text
+  dcipApiKey        String?   @db.Text
+  sarsApiKey        String?   @db.Text
+  odooUrl           String?
+  odooDatabase      String?
+  odooUsername      String?
+  odooPassword      String?   @db.Text
+  
+  emailNotifications Boolean  @default(true)
+  smsNotifications   Boolean  @default(false)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("tenant_settings")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  tenantId          String?
+  tenant            Tenant?   @relation(fields: [tenantId], references: [id])
+  
+  email             String    @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  phone             String?
+  
+  role              UserRole  @default(AGENT)
+  status            UserStatus @default(ACTIVE)
+  
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  
+  googleId          String?   @unique
+  microsoftId       String?   @unique
+  
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  emailVerifiedAt   DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  sessions          Session[]
+  registrationsCreated Registration[] @relation("CreatedBy")
+  documents         Document[]
+  auditLogs         AuditLog[]
+  
+  @@index([tenantId])
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  MANAGER
+  AGENT
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model Session {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  
+  token           String   @unique @db.Text
+  refreshToken    String   @unique @db.Text
+  ipAddress       String?
+  userAgent       String?  @db.Text
+  
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// ============================================
+// REGISTRATION MANAGEMENT
+// ============================================
+
+model Registration {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id])
+  
+  clientName            String
+  clientEmail           String
+  clientPhone           String?
+  
+  type                  RegistrationType
+  jurisdiction          Jurisdiction
+  status                RegistrationStatus @default(DRAFT)
+  
+  data                  Json      // Dynamic data based on registration type
+  
+  reservedName          String?
+  nameReservationNumber String?
+  nameReservationExpiry DateTime?
+  
+  registrationNumber    String?   @unique
+  registrationDate      DateTime?
+  certificateUrl        String?
+  
+  totalAmount           Float?
+  paidAmount            Float?
+  paymentStatus         PaymentStatus @default(PENDING)
+  
+  submittedAt           DateTime?
+  submittedBy           String?
+  submittedByUser       User?     @relation("CreatedBy", fields: [submittedBy], references: [id])
+  approvedAt            DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?   @db.Text
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  documents             Document[]
+  transactions          Transaction[]
+  commissions           Commission[]
+  history               RegistrationHistory[]
+  
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([registrationNumber])
+  @@index([clientEmail])
+  @@map("registrations")
+}
+
+enum RegistrationType {
+  NAME_RESERVATION
+  PTY_LTD
+  CLOSE_CORPORATION
+  BUSINESS_NAME
+  VAT_REGISTRATION
+  PAYE_REGISTRATION
+  UIF_REGISTRATION
+  ANNUAL_RETURN
+}
+
+enum Jurisdiction {
+  ZA  // South Africa
+  ZW  // Zimbabwe
+}
+
+enum RegistrationStatus {
+  DRAFT
+  PENDING_PAYMENT
+  SUBMITTED
+  IN_PROGRESS
+  UNDER_REVIEW
+  ADDITIONAL_INFO_REQUIRED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model RegistrationHistory {
+  id              String       @id @default(cuid())
+  registrationId  String
+  registration    Registration @relation(fields: [registrationId], references: [id])
+  
+  status          RegistrationStatus
+  notes           String?      @db.Text
+  performedBy     String?
+  
+  createdAt       DateTime     @default(now())
+  
+  @@index([registrationId])
+  @@index([createdAt])
+  @@map("registration_history")
+}
+
+// ============================================
+// DOCUMENT MANAGEMENT
+// ============================================
+
+model Document {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  
+  registrationId      String?
+  registration        Registration? @relation(fields: [registrationId], references: [id])
+  
+  uploadedBy          String
+  uploader            User      @relation(fields: [uploadedBy], references: [id])
+  
+  type                DocumentType
+  category            String
+  fileName            String
+  originalFileName    String
+  fileSize            Int
+  mimeType            String
+  
+  s3Key               String    @unique
+  s3Bucket            String
+  downloadUrl         String?   @db.Text
+  
+  verificationStatus  VerificationStatus @default(PENDING)
+  verifiedAt          DateTime?
+  verifiedBy          String?
+  verificationNotes   String?   @db.Text
+  
+  ocrText             String?   @db.Text
+  ocrData             Json?
+  
+  expiryDate          DateTime?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([registrationId])
+  @@index([uploadedBy])
+  @@index([verificationStatus])
+  @@map("documents")
+}
+
+enum DocumentType {
+  PDF
+  IMAGE
+  WORD
+  EXCEL
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+// ============================================
+// FINANCIAL MANAGEMENT
+// ============================================
+
+model Transaction {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  
+  registrationId      String?
+  registration        Registration? @relation(fields: [registrationId], references: [id])
+  
+  type                TransactionType
+  amount              Float
+  currency            String    @default("ZAR")
+  status              PaymentStatus
+  
+  paymentMethod       String?
+  paymentGateway      String?
+  gatewayTransactionId String?  @unique
+  gatewayResponse     Json?
+  
+  description         String?   @db.Text
+  metadata            Json?
+  
+  createdAt           DateTime  @default(now())
+  completedAt         DateTime?
+  
+  commissions         Commission[]
+  
+  @@index([tenantId])
+  @@index([registrationId])
+  @@index([status])
+  @@index([gatewayTransactionId])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  SUBSCRIPTION
+  REGISTRATION_FEE
+  COMMISSION
+  REFUND
+  ADD_ON
+}
+
+model Commission {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  
+  transactionId       String
+  transaction         Transaction @relation(fields: [transactionId], references: [id])
+  
+  registrationId      String?
+  registration        Registration? @relation(fields: [registrationId], references: [id])
+  
+  amount              Float
+  rate                Float
+  status              CommissionStatus @default(PENDING)
+  
+  paidAt              DateTime?
+  payoutMethod        String?
+  payoutReference     String?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([transactionId])
+  @@map("commissions")
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+// ============================================
+// AUDIT & COMPLIANCE
+// ============================================
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  
+  action          String
+  entityType      String
+  entityId        String?
+  
+  changes         Json?
+  
+  ipAddress       String?
+  userAgent       String?  @db.Text
+  
+  timestamp       DateTime @default(now())
+  
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
