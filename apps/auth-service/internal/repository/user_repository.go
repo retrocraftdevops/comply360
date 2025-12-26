@@ -121,7 +121,7 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	}
 	defer tx.Rollback()
 
-	// Set tenant context for RLS and search path
+	// Set tenant context for RLS
 	_, err = tx.Exec("SET LOCAL app.is_global_admin = 'true'")
 	if err != nil {
 		return nil, fmt.Errorf("failed to set admin context: %w", err)
@@ -131,20 +131,16 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 		return nil, fmt.Errorf("failed to set tenant context: %w", err)
 	}
 	
-	// Set search path to tenant schema (UUID without dashes)
+	// Use full schema name (UUID without dashes) to ensure correct table access
 	schemaName := fmt.Sprintf("tenant_%s", strings.ReplaceAll(tenantID.String(), "-", ""))
-	_, err = tx.Exec(fmt.Sprintf("SET LOCAL search_path TO %s, public", schemaName))
-	if err != nil {
-		return nil, fmt.Errorf("failed to set search path: %w", err)
-	}
 
-	query := `
+	query := fmt.Sprintf(`
 		SELECT id, tenant_id, email, password_hash, first_name, last_name, status,
 			email_verified, email_verified_at, mfa_enabled, mfa_method, mfa_secret,
 			failed_login_attempts, locked_until, last_login_at, created_at, updated_at
-		FROM users
+		FROM %s.users
 		WHERE email = $1 AND tenant_id = $2 AND deleted_at IS NULL
-	`
+	`, schemaName)
 
 	user := &models.User{}
 	var mfaSecret sql.NullString
