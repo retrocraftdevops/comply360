@@ -5,33 +5,12 @@
 	import { authStore, authActions } from '$stores/auth';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { beforeNavigate } from '$app/navigation';
 
 	let isLoadingUser = false;
 	let hasCheckedAuth = false;
-	let redirecting = false;
+	let lastRedirectPath = '';
 	let currentPath = '';
 	let showLoading = false;
-
-	// Use beforeNavigate to check auth before navigation
-	beforeNavigate(({ to, cancel }) => {
-		if (!to) return;
-		
-		const auth = get(authStore);
-		const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-		
-		// Allow navigation to auth pages
-		if (to.url.pathname.startsWith('/auth') || to.url.pathname === '/') {
-			return;
-		}
-		
-		// Redirect to login if not authenticated
-		if (!auth.isAuthenticated && !token && !redirecting) {
-			redirecting = true;
-			cancel();
-			goto('/auth/login', { replaceState: true });
-		}
-	});
 
 	onMount(async () => {
 		if (hasCheckedAuth) return;
@@ -40,7 +19,7 @@
 		currentPath = $page.url.pathname;
 		
 		// On auth pages, set loading to false immediately to prevent flash
-		if (currentPath.startsWith('/auth')) {
+		if (currentPath.startsWith('/auth') || currentPath === '/') {
 			authStore.update((state) => ({ ...state, isLoading: false }));
 			return;
 		}
@@ -69,9 +48,44 @@
 	});
 
 	// Update current path on navigation and loading state
+	// Only redirect if we're not already on auth page and haven't just redirected
 	$: {
-		currentPath = $page.url.pathname;
-		showLoading = (isLoadingUser || $authStore.isLoading) && !currentPath.startsWith('/auth');
+		const newPath = $page.url.pathname;
+		const auth = get(authStore);
+		const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+		
+		currentPath = newPath;
+		showLoading = (isLoadingUser || $authStore.isLoading) && !newPath.startsWith('/auth');
+		
+		// Only redirect if:
+		// 1. We're not on an auth page
+		// 2. We're not on the root page
+		// 3. User is not authenticated
+		// 4. No token exists
+		// 5. We haven't already redirected to this path
+		// 6. Auth check is complete
+		if (
+			typeof window !== 'undefined' &&
+			hasCheckedAuth &&
+			!isLoadingUser &&
+			!$authStore.isLoading &&
+			!newPath.startsWith('/auth') &&
+			newPath !== '/' &&
+			!auth.isAuthenticated &&
+			!token &&
+			lastRedirectPath !== newPath
+		) {
+			lastRedirectPath = newPath;
+			// Use setTimeout to break the reactive cycle
+			setTimeout(() => {
+				goto('/auth/login', { replaceState: true });
+			}, 0);
+		}
+		
+		// Reset redirect path if we're on auth page
+		if (newPath.startsWith('/auth')) {
+			lastRedirectPath = '';
+		}
 	}
 </script>
 
