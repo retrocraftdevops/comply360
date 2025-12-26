@@ -1,4 +1,5 @@
-import axios, type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
 import type {
 	AuthResponse,
 	LoginRequest,
@@ -15,7 +16,7 @@ import type {
 
 class APIClient {
 	private client: AxiosInstance;
-	private tenant Subdomain: string | null = null;
+	private tenantSubdomain: string | null = null;
 
 	constructor(baseURL: string = '/api/v1') {
 		this.client = axios.create({
@@ -25,6 +26,9 @@ class APIClient {
 			},
 			withCredentials: true
 		});
+
+		// Set default tenant ID for development
+		this.tenantSubdomain = '9ac5aa3e-91cd-451f-b182-563b0d751dc7';
 
 		// Request interceptor to add auth token and tenant ID
 		this.client.interceptors.request.use((config) => {

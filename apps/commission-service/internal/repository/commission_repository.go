@@ -289,6 +289,62 @@ func (r *CommissionRepository) GetSummary(schema string, tenantID, agentID uuid.
 	return summary, nil
 }
 
+// Approve approves a commission
+func (r *CommissionRepository) Approve(schema string, tenantID, commissionID, approvedBy uuid.UUID) error {
+	query := fmt.Sprintf(`
+		UPDATE %s.commissions SET
+			status = 'approved',
+			approved_at = CURRENT_TIMESTAMP,
+			approved_by = $1,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2 AND tenant_id = $3
+	`, schema)
+
+	result, err := r.db.Exec(query, approvedBy, commissionID, tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to approve commission: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("commission not found")
+	}
+
+	return nil
+}
+
+// Pay marks a commission as paid
+func (r *CommissionRepository) Pay(schema string, tenantID, commissionID uuid.UUID, paymentReference string) error {
+	query := fmt.Sprintf(`
+		UPDATE %s.commissions SET
+			status = 'paid',
+			paid_at = CURRENT_TIMESTAMP,
+			payment_reference = $1,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2 AND tenant_id = $3 AND status = 'approved'
+	`, schema)
+
+	result, err := r.db.Exec(query, paymentReference, commissionID, tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to mark commission as paid: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("commission not found or not approved")
+	}
+
+	return nil
+}
+
 // GetByRegistrationID retrieves commission by registration ID
 func (r *CommissionRepository) GetByRegistrationID(schema string, tenantID, registrationID uuid.UUID) (*models.Commission, error) {
 	query := fmt.Sprintf(`

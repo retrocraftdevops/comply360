@@ -18,6 +18,23 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 // Create creates a new user
 func (r *UserRepository) Create(user *models.User) error {
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Set tenant context for RLS
+	_, err = tx.Exec("SET LOCAL app.is_global_admin = 'true'")
+	if err != nil {
+		return fmt.Errorf("failed to set admin context: %w", err)
+	}
+	_, err = tx.Exec(fmt.Sprintf("SET LOCAL app.current_tenant_id = '%s'", user.TenantID.String()))
+	if err != nil {
+		return fmt.Errorf("failed to set tenant context: %w", err)
+	}
+
 	query := `
 		INSERT INTO users (
 			tenant_id, email, password_hash, first_name, last_name, status
@@ -25,7 +42,7 @@ func (r *UserRepository) Create(user *models.User) error {
 		RETURNING id, created_at, updated_at
 	`
 
-	return r.db.QueryRow(
+	err = tx.QueryRow(
 		query,
 		user.TenantID,
 		user.Email,
@@ -34,6 +51,13 @@ func (r *UserRepository) Create(user *models.User) error {
 		user.LastName,
 		user.Status,
 	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+
+	if err != nil {
+		return err
+	}
+
+	// Commit transaction
+	return tx.Commit()
 }
 
 // GetByID retrieves a user by ID
@@ -89,6 +113,23 @@ func (r *UserRepository) GetByID(tenantID, userID uuid.UUID) (*models.User, erro
 
 // GetByEmail retrieves a user by email
 func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.User, error) {
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Set tenant context for RLS
+	_, err = tx.Exec("SET LOCAL app.is_global_admin = 'true'")
+	if err != nil {
+		return nil, fmt.Errorf("failed to set admin context: %w", err)
+	}
+	_, err = tx.Exec(fmt.Sprintf("SET LOCAL app.current_tenant_id = '%s'", tenantID.String()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to set tenant context: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, email, password_hash, first_name, last_name, status,
 			email_verified, email_verified_at, mfa_enabled, mfa_method, mfa_secret,
@@ -100,7 +141,7 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	user := &models.User{}
 	var mfaSecret sql.NullString
 
-	err := r.db.QueryRow(query, email, tenantID).Scan(
+	err = tx.QueryRow(query, email, tenantID).Scan(
 		&user.ID,
 		&user.TenantID,
 		&user.Email,
@@ -130,6 +171,11 @@ func (r *UserRepository) GetByEmail(tenantID uuid.UUID, email string) (*models.U
 	// Set MFASecret if valid
 	if mfaSecret.Valid {
 		user.MFASecret = mfaSecret.String
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	// Load roles from user_roles table

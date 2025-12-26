@@ -68,6 +68,9 @@ func TestDocumentRepository_GetByID(t *testing.T) {
 		CREATE TABLE IF NOT EXISTS documents (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			tenant_id UUID NOT NULL,
+			registration_id UUID,
+			client_id UUID,
+			uploaded_by UUID,
 			document_type VARCHAR(100) NOT NULL,
 			file_name VARCHAR(255) NOT NULL,
 			file_size BIGINT NOT NULL,
@@ -75,10 +78,17 @@ func TestDocumentRepository_GetByID(t *testing.T) {
 			storage_path TEXT NOT NULL,
 			storage_provider VARCHAR(50) NOT NULL DEFAULT 's3',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			verified_at TIMESTAMP,
+			verified_by UUID,
 			ocr_processed BOOLEAN NOT NULL DEFAULT false,
+			ocr_text TEXT,
 			ai_verified BOOLEAN NOT NULL DEFAULT false,
+			ai_verification_score DECIMAL(5,2),
+			ai_verification_notes TEXT,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			deleted_at TIMESTAMP
 		)
 	`)
 	testhelpers.AssertNoError(t, err)
@@ -115,6 +125,9 @@ func TestDocumentRepository_UpdateStatus(t *testing.T) {
 		CREATE TABLE IF NOT EXISTS documents (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			tenant_id UUID NOT NULL,
+			registration_id UUID,
+			client_id UUID,
+			uploaded_by UUID,
 			document_type VARCHAR(100) NOT NULL,
 			file_name VARCHAR(255) NOT NULL,
 			file_size BIGINT NOT NULL,
@@ -125,9 +138,14 @@ func TestDocumentRepository_UpdateStatus(t *testing.T) {
 			verified_at TIMESTAMP,
 			verified_by UUID,
 			ocr_processed BOOLEAN NOT NULL DEFAULT false,
+			ocr_text TEXT,
 			ai_verified BOOLEAN NOT NULL DEFAULT false,
+			ai_verification_score DECIMAL(5,2),
+			ai_verification_notes TEXT,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			deleted_at TIMESTAMP
 		)
 	`)
 	testhelpers.AssertNoError(t, err)
@@ -169,6 +187,8 @@ func TestDocumentRepository_ListByRegistration(t *testing.T) {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			tenant_id UUID NOT NULL,
 			registration_id UUID,
+			client_id UUID,
+			uploaded_by UUID,
 			document_type VARCHAR(100) NOT NULL,
 			file_name VARCHAR(255) NOT NULL,
 			file_size BIGINT NOT NULL,
@@ -176,11 +196,17 @@ func TestDocumentRepository_ListByRegistration(t *testing.T) {
 			storage_path TEXT NOT NULL,
 			storage_provider VARCHAR(50) NOT NULL DEFAULT 's3',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			verified_at TIMESTAMP,
+			verified_by UUID,
 			ocr_processed BOOLEAN NOT NULL DEFAULT false,
+			ocr_text TEXT,
 			ai_verified BOOLEAN NOT NULL DEFAULT false,
-			deleted_at TIMESTAMP,
+			ai_verification_score DECIMAL(5,2),
+			ai_verification_notes TEXT,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			deleted_at TIMESTAMP
 		)
 	`)
 	testhelpers.AssertNoError(t, err)
@@ -220,6 +246,9 @@ func TestDocumentRepository_Delete(t *testing.T) {
 		CREATE TABLE IF NOT EXISTS documents (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			tenant_id UUID NOT NULL,
+			registration_id UUID,
+			client_id UUID,
+			uploaded_by UUID,
 			document_type VARCHAR(100) NOT NULL,
 			file_name VARCHAR(255) NOT NULL,
 			file_size BIGINT NOT NULL,
@@ -227,11 +256,17 @@ func TestDocumentRepository_Delete(t *testing.T) {
 			storage_path TEXT NOT NULL,
 			storage_provider VARCHAR(50) NOT NULL DEFAULT 's3',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			verified_at TIMESTAMP,
+			verified_by UUID,
 			ocr_processed BOOLEAN NOT NULL DEFAULT false,
+			ocr_text TEXT,
 			ai_verified BOOLEAN NOT NULL DEFAULT false,
-			deleted_at TIMESTAMP,
+			ai_verification_score DECIMAL(5,2),
+			ai_verification_notes TEXT,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			deleted_at TIMESTAMP
 		)
 	`)
 	testhelpers.AssertNoError(t, err)

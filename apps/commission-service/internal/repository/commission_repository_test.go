@@ -23,6 +23,12 @@ func TestCommissionRepository_Create(t *testing.T) {
 			commission_amount DECIMAL(10,2) NOT NULL,
 			currency VARCHAR(3) NOT NULL DEFAULT 'ZAR',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			approved_at TIMESTAMP,
+			approved_by UUID,
+			paid_at TIMESTAMP,
+			payment_reference VARCHAR(255),
+			odoo_commission_id INTEGER,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -63,6 +69,12 @@ func TestCommissionRepository_GetByID(t *testing.T) {
 			commission_amount DECIMAL(10,2) NOT NULL,
 			currency VARCHAR(3) NOT NULL DEFAULT 'ZAR',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			approved_at TIMESTAMP,
+			approved_by UUID,
+			paid_at TIMESTAMP,
+			payment_reference VARCHAR(255),
+			odoo_commission_id INTEGER,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -112,6 +124,8 @@ func TestCommissionRepository_UpdateStatus(t *testing.T) {
 			approved_by UUID,
 			paid_at TIMESTAMP,
 			payment_reference VARCHAR(255),
+			odoo_commission_id INTEGER,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -165,6 +179,8 @@ func TestCommissionRepository_Pay(t *testing.T) {
 			approved_by UUID,
 			paid_at TIMESTAMP,
 			payment_reference VARCHAR(255),
+			odoo_commission_id INTEGER,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -224,6 +240,12 @@ func TestCommissionRepository_GetSummary(t *testing.T) {
 			commission_amount DECIMAL(10,2) NOT NULL,
 			currency VARCHAR(3) NOT NULL DEFAULT 'ZAR',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			approved_at TIMESTAMP,
+			approved_by UUID,
+			paid_at TIMESTAMP,
+			payment_reference VARCHAR(255),
+			odoo_commission_id INTEGER,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -258,12 +280,12 @@ func TestCommissionRepository_GetSummary(t *testing.T) {
 	}
 
 	// Test: Get summary
-	summary, err := repo.GetSummary(tdb.Schema, tdb.TenantID, agentID)
+	summary, err := repo.GetSummary(tdb.Schema, tdb.TenantID, agentID, "ZAR")
 	testhelpers.AssertNoError(t, err, "Failed to get commission summary")
-	testhelpers.AssertEqual(t, 2000.00, summary.TotalCommissions, "Total commissions incorrect")
-	testhelpers.AssertEqual(t, 1000.00, summary.TotalPending, "Total pending incorrect (2 x 500)")
-	testhelpers.AssertEqual(t, 500.00, summary.TotalApproved, "Total approved incorrect")
-	testhelpers.AssertEqual(t, 500.00, summary.TotalPaid, "Total paid incorrect")
+	testhelpers.AssertEqual(t, 2000.00, summary.TotalAmount, "Total amount incorrect")
+	testhelpers.AssertEqual(t, 1000.00, summary.PendingAmount, "Pending amount incorrect (2 x 500)")
+	testhelpers.AssertEqual(t, 500.00, summary.ApprovedAmount, "Approved amount incorrect")
+	testhelpers.AssertEqual(t, 500.00, summary.PaidAmount, "Paid amount incorrect")
 }
 
 func TestCommissionRepository_List(t *testing.T) {
@@ -281,6 +303,12 @@ func TestCommissionRepository_List(t *testing.T) {
 			commission_amount DECIMAL(10,2) NOT NULL,
 			currency VARCHAR(3) NOT NULL DEFAULT 'ZAR',
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			approved_at TIMESTAMP,
+			approved_by UUID,
+			paid_at TIMESTAMP,
+			payment_reference VARCHAR(255),
+			odoo_commission_id INTEGER,
+			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -306,7 +334,7 @@ func TestCommissionRepository_List(t *testing.T) {
 	}
 
 	// Test: List commissions
-	commissions, total, err := repo.List(tdb.Schema, tdb.TenantID, 10, 0)
+	commissions, total, err := repo.List(tdb.Schema, tdb.TenantID, nil, nil, 0, 10, "")
 	testhelpers.AssertNoError(t, err, "Failed to list commissions")
 	testhelpers.AssertEqual(t, 5, len(commissions), "Should return 5 commissions")
 	testhelpers.AssertEqual(t, 5, total, "Total count should be 5")

@@ -106,7 +106,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	authResponse, err := h.authService.RefreshToken(req.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, errors.NewAPIError(
-			errors.ErrTokenInvalid,
+			errors.ErrInvalidToken,
 			err.Error(),
 		))
 		return
