@@ -48,12 +48,31 @@ func (h *CommissionHandler) CreateCommission(c *gin.Context) {
 		return
 	}
 
+	// Parse UUIDs
+	registrationID, err := uuid.Parse(req.RegistrationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errors.NewAPIError(
+			errors.ErrInvalidInput,
+			"Invalid registration ID",
+		))
+		return
+	}
+
+	agentID, err := uuid.Parse(req.AgentID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errors.NewAPIError(
+			errors.ErrInvalidInput,
+			"Invalid agent ID",
+		))
+		return
+	}
+
 	// Create commission
 	commission, err := h.service.CreateCommission(
 		schema.(string),
 		tenantID,
-		req.RegistrationID,
-		req.AgentID,
+		registrationID,
+		agentID,
 		req.RegistrationFee,
 		req.CommissionRate,
 		req.Currency,

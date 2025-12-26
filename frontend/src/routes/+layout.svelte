@@ -42,18 +42,17 @@
 
 	// Redirect to login if not authenticated and not on auth pages
 	// Use a more stable reactive statement that doesn't cause loops
-	$: {
-		if (typeof window === 'undefined') return;
-		if (hasCheckedAuth && !isLoadingUser && !$authStore.isLoading) {
-			const isAuthPage = $page.url.pathname.startsWith('/auth');
-			const hasToken = !!localStorage.getItem('access_token');
-			
-			// Only redirect if we're not on auth pages, not authenticated, and no token
-			if (!isAuthPage && !$authStore.isAuthenticated && !hasToken) {
-				console.log('[Layout] No auth, redirecting to login');
-				goto('/auth/login', { replaceState: true });
-			}
-		}
+	$: if (
+		typeof window !== 'undefined' &&
+		hasCheckedAuth &&
+		!isLoadingUser &&
+		!$authStore.isLoading &&
+		!$page.url.pathname.startsWith('/auth') &&
+		!$authStore.isAuthenticated &&
+		!localStorage.getItem('access_token')
+	) {
+		console.log('[Layout] No auth, redirecting to login');
+		goto('/auth/login', { replaceState: true });
 	}
 </script>
 
