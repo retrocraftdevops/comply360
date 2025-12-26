@@ -53,7 +53,6 @@ declare module '$env/static/private' {
 	export const npm_config_local_prefix: string;
 	export const DBUS_STARTER_BUS_TYPE: string;
 	export const SYSTEMD_EXEC_PID: string;
-	export const IM_CONFIG_CHECK_ENV: string;
 	export const NO_COLOR: string;
 	export const DBUS_SESSION_BUS_ADDRESS: string;
 	export const COLORTERM: string;
@@ -121,7 +120,6 @@ declare module '$env/static/private' {
 	export const npm_execpath: string;
 	export const XDG_CONFIG_DIRS: string;
 	export const VSCODE_CODE_CACHE_PATH: string;
-	export const NVM_CD_FLAGS: string;
 	export const DBUS_STARTER_ADDRESS: string;
 	export const XDG_DATA_DIRS: string;
 	export const npm_config_global_prefix: string;
@@ -191,7 +189,6 @@ declare module '$env/dynamic/private' {
 		npm_config_local_prefix: string;
 		DBUS_STARTER_BUS_TYPE: string;
 		SYSTEMD_EXEC_PID: string;
-		IM_CONFIG_CHECK_ENV: string;
 		NO_COLOR: string;
 		DBUS_SESSION_BUS_ADDRESS: string;
 		COLORTERM: string;
@@ -259,7 +256,6 @@ declare module '$env/dynamic/private' {
 		npm_execpath: string;
 		XDG_CONFIG_DIRS: string;
 		VSCODE_CODE_CACHE_PATH: string;
-		NVM_CD_FLAGS: string;
 		DBUS_STARTER_ADDRESS: string;
 		XDG_DATA_DIRS: string;
 		npm_config_global_prefix: string;
