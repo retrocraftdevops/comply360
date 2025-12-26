@@ -11,6 +11,13 @@
 	onMount(async () => {
 		if (hasCheckedAuth) return;
 		
+		// On auth pages, set loading to false immediately to prevent flash
+		if ($page.url.pathname.startsWith('/auth')) {
+			authStore.update((state) => ({ ...state, isLoading: false }));
+			hasCheckedAuth = true;
+			return;
+		}
+		
 		console.log('[Layout] onMount - checking authentication');
 		hasCheckedAuth = true;
 		
@@ -56,7 +63,7 @@
 	}
 </script>
 
-{#if $authStore.isLoading}
+{#if $authStore.isLoading && !$page.url.pathname.startsWith('/auth')}
 	<div class="flex h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50/20">
 		<div class="text-center space-y-4">
 			<div class="flex justify-center">
