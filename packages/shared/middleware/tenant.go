@@ -99,6 +99,7 @@ func TenantMiddleware(db *sql.DB) gin.HandlerFunc {
 		c.Set(TenantIDKey, tenantID)
 		c.Set(TenantKey, tenant)
 		c.Set(SubdomainKey, subdomain)
+		c.Set("tenant_schema", tenant.TenantSchema())
 
 		// Set PostgreSQL session variable for RLS
 		if err := setTenantContext(db, tenantID); err != nil {
