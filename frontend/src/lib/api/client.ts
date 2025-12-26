@@ -110,19 +110,37 @@ class APIClient {
 
 	// Auth endpoints
 	async login(data: LoginRequest): Promise<AuthResponse> {
-		console.log('[API Client] Login request:', { url: this.client.defaults.baseURL + '/auth/login', data: { ...data, password: '***' } });
+		console.log('[API Client] Sending login request to:', this.client.defaults.baseURL + '/auth/login');
+		console.log('[API Client] Request data:', { email: data.email, password: '***' });
+		console.log('[API Client] Headers:', {
+			'Content-Type': 'application/json',
+			'X-Tenant-ID': this.tenantSubdomain
+		});
+		
 		try {
 			const response = await this.client.post<AuthResponse>('/auth/login', data);
-			console.log('[API Client] Login response:', { status: response.status, data: response.data });
+			console.log('[API Client] Login response received:', {
+				status: response.status,
+				hasToken: !!response.data.access_token,
+				user: response.data.user?.email
+			});
 			this.setAccessToken(response.data.access_token);
 			this.setRefreshToken(response.data.refresh_token);
 			return response.data;
 		} catch (error: any) {
 			console.error('[API Client] Login error:', {
 				message: error.message,
+				response: error.response?.data,
 				status: error.response?.status,
-				data: error.response?.data,
-				config: error.config
+				statusText: error.response?.statusText,
+				headers: error.response?.headers,
+				cors: error.code === 'ERR_NETWORK' || error.message?.includes('CORS'),
+				config: {
+					url: error.config?.url,
+					method: error.config?.method,
+					baseURL: error.config?.baseURL,
+					headers: error.config?.headers
+				}
 			});
 			throw error;
 		}
