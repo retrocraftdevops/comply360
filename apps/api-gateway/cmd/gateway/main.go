@@ -167,6 +167,12 @@ func setupRouter(db *sql.DB, redisClient *redis.Client, jwtSecret string) *gin.E
 			{
 				router.SetupIntegrationRoutes(integration)
 			}
+
+			// Notification service routes (internal/authenticated)
+			notifications := v1.Group("/notifications")
+			{
+				router.SetupNotificationRoutes(notifications)
+			}
 		}
 	}
 

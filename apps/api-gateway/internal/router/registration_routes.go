@@ -6,7 +6,7 @@ import (
 
 const (
 	registrationServiceURLEnvKey = "REGISTRATION_SERVICE_URL"
-	defaultRegistrationServiceURL = "http://localhost:8083"
+	defaultRegistrationServiceURL = "http://localhost:8081"
 )
 
 // SetupRegistrationRoutes configures registration management routes

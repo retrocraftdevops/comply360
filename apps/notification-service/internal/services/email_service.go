@@ -1,8 +1,12 @@
 package services
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
+	"net/smtp"
+	"strings"
 )
 
 // EmailService handles sending emails
@@ -35,33 +39,171 @@ func NewEmailService(smtpHost string, smtpPort int, smtpUsername, smtpPassword, 
 	}
 }
 
-// SendEmail sends an email
+// SendEmail sends an email via SMTP
 func (s *EmailService) SendEmail(msg EmailMessage) error {
-	// TODO: Implement actual email sending via SMTP
-	// For now, just log the email (development mode)
-	log.Printf("[EMAIL] To: %v | Subject: %s | Body: %s\n", msg.To, msg.Subject, msg.Body)
+	// Development mode: Just log if SMTP not configured
+	if s.smtpHost == "" || s.smtpHost == "localhost" {
+		log.Printf("[EMAIL - DEV MODE] To: %v | Subject: %s | Body: %s\n", msg.To, msg.Subject, msg.Body)
+		return nil
+	}
 
-	// In production, you would use a library like gomail or net/smtp
-	// Example implementation would be:
-	/*
-	m := gomail.NewMessage()
-	m.SetHeader("From", fmt.Sprintf("%s <%s>", s.fromName, s.fromEmail))
-	m.SetHeader("To", msg.To...)
-	m.SetHeader("Subject", msg.Subject)
+	// Production mode: Actually send email
+	log.Printf("[EMAIL] Sending to: %v | Subject: %s", msg.To, msg.Subject)
+
+	// Build email headers
+	from := fmt.Sprintf("%s <%s>", s.fromName, s.fromEmail)
+	headers := make(map[string]string)
+	headers["From"] = from
+	headers["To"] = strings.Join(msg.To, ", ")
+	headers["Subject"] = msg.Subject
+	headers["MIME-Version"] = "1.0"
 
 	if msg.IsHTML {
-		m.SetBody("text/html", msg.Body)
+		headers["Content-Type"] = "text/html; charset=UTF-8"
 	} else {
-		m.SetBody("text/plain", msg.Body)
+		headers["Content-Type"] = "text/plain; charset=UTF-8"
 	}
 
-	d := gomail.NewDialer(s.smtpHost, s.smtpPort, s.smtpUsername, s.smtpPassword)
-
-	if err := d.DialAndSend(m); err != nil {
-		return fmt.Errorf("failed to send email: %w", err)
+	// Build message
+	var message strings.Builder
+	for k, v := range headers {
+		message.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
 	}
-	*/
+	message.WriteString("\r\n")
+	message.WriteString(msg.Body)
 
+	// Connect to SMTP server
+	addr := fmt.Sprintf("%s:%d", s.smtpHost, s.smtpPort)
+
+	// Try TLS connection first (port 465)
+	if s.smtpPort == 465 {
+		return s.sendViaTLS(addr, msg.To, []byte(message.String()))
+	}
+
+	// Use STARTTLS (port 587 or 25)
+	return s.sendViaSTARTTLS(addr, msg.To, []byte(message.String()))
+}
+
+// sendViaTLS sends email using TLS connection (port 465)
+func (s *EmailService) sendViaTLS(addr string, to []string, message []byte) error {
+	// TLS config
+	tlsConfig := &tls.Config{
+		ServerName: s.smtpHost,
+	}
+
+	// Connect with TLS
+	conn, err := tls.Dial("tcp", addr, tlsConfig)
+	if err != nil {
+		return fmt.Errorf("failed to connect via TLS: %w", err)
+	}
+	defer conn.Close()
+
+	// Create SMTP client
+	client, err := smtp.NewClient(conn, s.smtpHost)
+	if err != nil {
+		return fmt.Errorf("failed to create SMTP client: %w", err)
+	}
+	defer client.Quit()
+
+	// Authenticate
+	if s.smtpUsername != "" {
+		auth := smtp.PlainAuth("", s.smtpUsername, s.smtpPassword, s.smtpHost)
+		if err := client.Auth(auth); err != nil {
+			return fmt.Errorf("SMTP auth failed: %w", err)
+		}
+	}
+
+	// Send email
+	if err := client.Mail(s.fromEmail); err != nil {
+		return fmt.Errorf("MAIL command failed: %w", err)
+	}
+
+	for _, recipient := range to {
+		if err := client.Rcpt(recipient); err != nil {
+			return fmt.Errorf("RCPT command failed for %s: %w", recipient, err)
+		}
+	}
+
+	writer, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("DATA command failed: %w", err)
+	}
+
+	_, err = writer.Write(message)
+	if err != nil {
+		return fmt.Errorf("failed to write message: %w", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close writer: %w", err)
+	}
+
+	log.Printf("[EMAIL] Successfully sent to: %v", to)
+	return nil
+}
+
+// sendViaSTARTTLS sends email using STARTTLS (port 587 or 25)
+func (s *EmailService) sendViaSTARTTLS(addr string, to []string, message []byte) error {
+	// Connect to SMTP server
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to SMTP server: %w", err)
+	}
+	defer conn.Close()
+
+	// Create SMTP client
+	client, err := smtp.NewClient(conn, s.smtpHost)
+	if err != nil {
+		return fmt.Errorf("failed to create SMTP client: %w", err)
+	}
+	defer client.Quit()
+
+	// STARTTLS if supported
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		tlsConfig := &tls.Config{
+			ServerName: s.smtpHost,
+		}
+		if err := client.StartTLS(tlsConfig); err != nil {
+			log.Printf("[EMAIL] Warning: STARTTLS failed: %v", err)
+		}
+	}
+
+	// Authenticate
+	if s.smtpUsername != "" {
+		auth := smtp.PlainAuth("", s.smtpUsername, s.smtpPassword, s.smtpHost)
+		if err := client.Auth(auth); err != nil {
+			return fmt.Errorf("SMTP auth failed: %w", err)
+		}
+	}
+
+	// Send email
+	if err := client.Mail(s.fromEmail); err != nil {
+		return fmt.Errorf("MAIL command failed: %w", err)
+	}
+
+	for _, recipient := range to {
+		if err := client.Rcpt(recipient); err != nil {
+			return fmt.Errorf("RCPT command failed for %s: %w", recipient, err)
+		}
+	}
+
+	writer, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("DATA command failed: %w", err)
+	}
+
+	_, err = writer.Write(message)
+	if err != nil {
+		return fmt.Errorf("failed to write message: %w", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close writer: %w", err)
+	}
+
+	log.Printf("[EMAIL] Successfully sent to: %v", to)
 	return nil
 }
 

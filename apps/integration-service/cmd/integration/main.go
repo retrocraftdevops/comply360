@@ -28,6 +28,14 @@ func main() {
 		Password: getEnv("ODOO_PASSWORD", "admin"),
 	}
 
+	// CIPC configuration
+	cipcConfig := &adapters.CIPCConfig{
+		BaseURL:  getEnv("CIPC_URL", "https://api.cipc.co.za"),
+		APIKey:   getEnv("CIPC_API_KEY", ""),
+		Username: getEnv("CIPC_USERNAME", ""),
+		Password: getEnv("CIPC_PASSWORD", ""),
+	}
+
 	// Initialize Odoo client
 	odooClient, err := adapters.NewOdooClient(odooConfig)
 	if err != nil {
@@ -38,11 +46,20 @@ func main() {
 		log.Println("Successfully connected to Odoo")
 	}
 
+	// Initialize CIPC client
+	cipcClient, err := adapters.NewCIPCClient(cipcConfig)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize CIPC client: %v", err)
+	} else {
+		log.Println("Successfully initialized CIPC client")
+	}
+
 	// Initialize services
 	odooService := services.NewOdooService(odooClient)
 
 	// Initialize handlers
 	odooHandler := handlers.NewOdooHandler(odooService)
+	var cipcHandler *handlers.CIPCHandler
 
 	// Connect to RabbitMQ
 	rabbitConn, err := amqp.Dial(rabbitURL)
@@ -51,6 +68,18 @@ func main() {
 		log.Println("Integration service will start but event consumption will be unavailable")
 	} else {
 		log.Println("Connected to RabbitMQ")
+
+		// Initialize CIPC service
+		if cipcClient != nil {
+			cipcService, err := services.NewCIPCService(cipcClient, rabbitConn)
+			if err != nil {
+				log.Printf("Warning: Failed to create CIPC service: %v", err)
+			} else {
+				cipcHandler = handlers.NewCIPCHandler(cipcService)
+				defer cipcService.Close()
+				log.Println("CIPC service initialized successfully")
+			}
+		}
 
 		// Initialize and start Odoo sync consumer
 		odooSyncConsumer, err := consumers.NewOdooSyncConsumer(rabbitConn, odooService)
@@ -67,7 +96,7 @@ func main() {
 	}
 
 	// Setup router
-	r := setupRouter(odooHandler)
+	r := setupRouter(odooHandler, cipcHandler)
 
 	// Start HTTP server in goroutine
 	go func() {
@@ -86,7 +115,7 @@ func main() {
 	log.Println("Shutting down Integration Service...")
 }
 
-func setupRouter(odooHandler *handlers.OdooHandler) *gin.Engine {
+func setupRouter(odooHandler *handlers.OdooHandler, cipcHandler *handlers.CIPCHandler) *gin.Engine {
 	// Set Gin mode
 	if os.Getenv("APP_ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -136,13 +165,17 @@ func setupRouter(odooHandler *handlers.OdooHandler) *gin.Engine {
 			odoo.POST("/test-connection", odooHandler.TestConnection)
 		}
 
-		// CIPC integration routes (placeholder)
+		// CIPC integration routes
 		cipc := api.Group("/cipc")
 		{
-			cipc.POST("/search", placeholderHandler("CIPC search"))
-			cipc.POST("/verify", placeholderHandler("CIPC verify"))
-			cipc.GET("/company/:registration_number", placeholderHandler("CIPC company lookup"))
-			cipc.GET("/status", placeholderHandler("CIPC status"))
+			if cipcHandler != nil {
+				cipcHandler.SetupRoutes(cipc)
+			} else {
+				cipc.POST("/search", placeholderHandler("CIPC search - not configured"))
+				cipc.POST("/verify", placeholderHandler("CIPC verify - not configured"))
+				cipc.GET("/company/:registration_number", placeholderHandler("CIPC company lookup - not configured"))
+				cipc.GET("/status", placeholderHandler("CIPC status - not configured"))
+			}
 		}
 
 		// SARS integration routes (placeholder)
@@ -195,11 +228,15 @@ func setupRouter(odooHandler *handlers.OdooHandler) *gin.Engine {
 
 		// Overall integration status
 		api.GET("/status", func(c *gin.Context) {
+			cipcStatus := "not_configured"
+			if cipcHandler != nil {
+				cipcStatus = "connected"
+			}
 			c.JSON(200, gin.H{
 				"service": "integration-service",
 				"integrations": gin.H{
 					"odoo":    "connected",
-					"cipc":    "not_configured",
+					"cipc":    cipcStatus,
 					"sars":    "not_configured",
 					"stripe":  "not_configured",
 					"payfast": "not_configured",

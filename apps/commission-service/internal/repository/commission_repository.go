@@ -29,9 +29,31 @@ func (r *CommissionRepository) Create(schema string, commission *models.Commissi
 	defer tx.Rollback()
 
 	// Set tenant context for RLS - CRITICAL for FK constraint checks!
-	_, err = tx.Exec(fmt.Sprintf("SET LOCAL app.current_tenant_id = '%s'", commission.TenantID.String()))
+	tenantIDSetting := fmt.Sprintf("SET LOCAL app.current_tenant_id = '%s'", commission.TenantID.String())
+	fmt.Printf("DEBUG REPO: Executing: %s\n", tenantIDSetting)
+	_, err = tx.Exec(tenantIDSetting)
 	if err != nil {
+		fmt.Printf("DEBUG REPO: ERROR setting tenant context: %v\n", err)
 		return fmt.Errorf("failed to set tenant context: %w", err)
+	}
+	fmt.Printf("DEBUG REPO: ✓ Tenant context set\n")
+
+	// Set global admin flag to bypass RLS for FK checks
+	fmt.Printf("DEBUG REPO: Executing: SET LOCAL app.is_global_admin = 'true'\n")
+	_, err = tx.Exec("SET LOCAL app.is_global_admin = 'true'")
+	if err != nil {
+		fmt.Printf("DEBUG REPO: ERROR setting admin context: %v\n", err)
+		return fmt.Errorf("failed to set admin context: %w", err)
+	}
+	fmt.Printf("DEBUG REPO: ✓ Admin context set\n")
+
+	// Verify session variables are set
+	var tenantIDCheck, adminCheck string
+	err = tx.QueryRow("SELECT current_setting('app.current_tenant_id', true), current_setting('app.is_global_admin', true)").Scan(&tenantIDCheck, &adminCheck)
+	if err != nil {
+		fmt.Printf("DEBUG REPO: ERROR reading session vars: %v\n", err)
+	} else {
+		fmt.Printf("DEBUG REPO: Session vars verification - tenant_id=%s, is_global_admin=%s\n", tenantIDCheck, adminCheck)
 	}
 
 	query := fmt.Sprintf(`

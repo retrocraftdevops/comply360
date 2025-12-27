@@ -51,10 +51,10 @@ func SetupIntegrationRoutes(router *gin.RouterGroup) {
 	// CIPC (Companies and Intellectual Property Commission) integration
 	cipc := router.Group("/cipc")
 	{
-		cipc.POST("/search", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/search"))
-		cipc.POST("/verify", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/verify"))
+		cipc.GET("/search", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/search"))
+		cipc.POST("/validate", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/validate"))
 		cipc.GET("/company/:registration_number", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/company/:registration_number"))
-		cipc.GET("/status", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/status"))
+		cipc.GET("/status/:registration_number", proxyToService(integrationServiceURL, "/api/v1/integration/cipc/status/:registration_number"))
 	}
 
 	// SARS (South African Revenue Service) integration

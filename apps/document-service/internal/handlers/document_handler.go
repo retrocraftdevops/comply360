@@ -7,6 +7,7 @@ import (
 
 	"github.com/comply360/document-service/internal/services"
 	"github.com/comply360/shared/errors"
+	sharedmiddleware "github.com/comply360/shared/middleware"
 	"github.com/comply360/shared/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -37,18 +38,8 @@ func (h *DocumentHandler) UploadDocument(c *gin.Context) {
 	}
 
 	// Get tenant ID and user ID from context
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
-
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, errors.NewAPIError(
-			errors.ErrUnauthorized,
-			"User not authenticated",
-		))
-		return
-	}
-	uploadedBy, _ := uuid.Parse(userIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
+	uploadedBy, _ := sharedmiddleware.GetUserID(c)
 
 	// Limit upload size
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadSize)
@@ -145,8 +136,7 @@ func (h *DocumentHandler) UploadDocument(c *gin.Context) {
 func (h *DocumentHandler) GetDocument(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse document ID
 	documentID, err := uuid.Parse(c.Param("id"))
@@ -175,8 +165,7 @@ func (h *DocumentHandler) GetDocument(c *gin.Context) {
 func (h *DocumentHandler) GetDocumentDownloadURL(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse document ID
 	documentID, err := uuid.Parse(c.Param("id"))
@@ -219,8 +208,7 @@ func (h *DocumentHandler) GetDocumentDownloadURL(c *gin.Context) {
 func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse query parameters
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -259,8 +247,7 @@ func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse document ID
 	documentID, err := uuid.Parse(c.Param("id"))
@@ -327,12 +314,10 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 func (h *DocumentHandler) VerifyDocument(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Get user ID
-	userIDVal, _ := c.Get("user_id")
-	verifiedBy, _ := uuid.Parse(userIDVal.(string))
+	verifiedBy, _ := sharedmiddleware.GetUserID(c)
 
 	// Parse document ID
 	documentID, err := uuid.Parse(c.Param("id"))
@@ -363,8 +348,7 @@ func (h *DocumentHandler) VerifyDocument(c *gin.Context) {
 func (h *DocumentHandler) DeleteDocument(c *gin.Context) {
 	// Get tenant context
 	schema, _ := c.Get("tenant_schema")
-	tenantIDVal, _ := c.Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDVal.(string))
+	tenantID, _ := sharedmiddleware.GetTenantID(c)
 
 	// Parse document ID
 	documentID, err := uuid.Parse(c.Param("id"))

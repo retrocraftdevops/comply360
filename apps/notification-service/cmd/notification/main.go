@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/comply360/notification-service/internal/consumers"
+	"github.com/comply360/notification-service/internal/handlers"
 	"github.com/comply360/notification-service/internal/services"
 	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -46,6 +47,9 @@ func main() {
 	// Initialize SMS service
 	smsService := services.NewSMSService(smsAPIKey, smsAPISecret, smsFromNumber, smsProvider)
 
+	// Initialize handlers
+	emailHandler := handlers.NewEmailHandler(emailService)
+
 	// Initialize event consumer
 	eventConsumer, err := consumers.NewEventConsumer(rabbitConn, emailService, smsService)
 	if err != nil {
@@ -58,8 +62,8 @@ func main() {
 		log.Fatalf("Failed to start event consumer: %v", err)
 	}
 
-	// Setup HTTP server for health checks
-	r := setupRouter()
+	// Setup HTTP server
+	r := setupRouter(emailHandler)
 
 	// Start HTTP server in goroutine
 	go func() {
@@ -78,7 +82,7 @@ func main() {
 	log.Println("Shutting down Notification Service...")
 }
 
-func setupRouter() *gin.Engine {
+func setupRouter(emailHandler *handlers.EmailHandler) *gin.Engine {
 	// Set Gin mode
 	if os.Getenv("APP_ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -94,6 +98,26 @@ func setupRouter() *gin.Engine {
 			"version": "1.0.0",
 		})
 	})
+
+	// API routes
+	api := r.Group("/api/v1/notifications")
+	{
+		// Email routes
+		email := api.Group("/email")
+		{
+			emailHandler.SetupRoutes(email)
+		}
+
+		// SMS routes (placeholder for future implementation)
+		sms := api.Group("/sms")
+		{
+			sms.POST("/send", func(c *gin.Context) {
+				c.JSON(501, gin.H{
+					"message": "SMS functionality not yet implemented",
+				})
+			})
+		}
+	}
 
 	return r
 }
